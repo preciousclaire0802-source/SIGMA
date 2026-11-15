@@ -35,6 +35,7 @@
         <button class="active" type="button">▦ &nbsp; Overview</button>
         <button id="equipmentNav" type="button">◉ &nbsp; Equipment</button>
         <button id="defectsNav" type="button">⚑ &nbsp; Defect reports</button>
+        <button id="inspectionsNav" type="button">▤ &nbsp; Inspections</button>
       </nav>
       <div class="side-note">Maintenance intelligence<br />Simulated records · No live telemetry</div>
     </aside>
@@ -71,6 +72,20 @@
         <h3 style="margin-top:30px">Recent defect reports</h3>
         <div class="defect-list" id="defectList"><p class="muted">Loading defect reports…</p></div>
       </section>
+      <section class="panel" id="inspectionsPanel">
+        <div class="section-head"><h2>Inspection scheduling</h2><button id="refreshInspections" type="button" class="outline">↻ Refresh inspections</button></div>
+        <p class="muted">Schedule an equipment inspection. Only administrators and engineers may create schedules.</p>
+        <form id="inspectionForm">
+          <div class="form-grid">
+            <label>Traffic signal<select id="inspectionSignal" required><option value="">Select equipment</option></select></label>
+            <label>Inspection type<select id="inspectionType" required><option>Routine</option><option>Preventive</option><option>Corrective</option><option>Follow-up</option><option>Special</option></select></label>
+            <label>Scheduled date<input id="inspectionDate" type="date" required /></label>
+          </div>
+          <div class="actions"><button id="scheduleInspection" type="submit" class="primary">Schedule inspection</button><span id="inspectionMessage" class="form-status" role="status"></span></div>
+        </form>
+        <h3 style="margin-top:30px">Inspection records</h3>
+        <div class="defect-list" id="inspectionList"><p class="muted">Loading inspections…</p></div>
+      </section>
       <p id="appMessage" class="foot" role="status"></p>
     </main>
   </div>
@@ -106,6 +121,7 @@
       for(const [label,value] of fields){const box=document.createElement('div');box.className='detail';const small=document.createElement('small');small.textContent=label;const bold=document.createElement('b');bold.textContent=String(value??'—');box.append(small,bold);$('detailsGrid').appendChild(box);}
       $('priorityReasons').textContent=(item.priority_reasons||[]).join(' · ')||'No current rule-based concerns recorded.';
       $('defectSignal').value=item.id;
+      $('inspectionSignal').value=item.id;
       $('detailsPanel').classList.remove('hidden');$('detailsPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
     }
     async function loadEquipment(){
@@ -114,9 +130,13 @@
       if(error){$('appMessage').textContent='Could not load equipment: '+error.message;return;}
       equipment=data||[];
       const previouslySelected=$('defectSignal').value;
+      const inspectionSelected=$('inspectionSignal').value;
       $('defectSignal').replaceChildren(new Option('Select equipment',''));
+      $('inspectionSignal').replaceChildren(new Option('Select equipment',''));
       for(const item of equipment)$('defectSignal').add(new Option(item.equipment_id+' — '+(item.intersection_name||item.location_name),item.id));
+      for(const item of equipment)$('inspectionSignal').add(new Option(item.equipment_id+' — '+(item.intersection_name||item.location_name),item.id));
       $('defectSignal').value=previouslySelected;
+      $('inspectionSignal').value=inspectionSelected;
       $('totalCount').textContent=equipment.length;
       for(const level of ['High','Moderate','Low']) $(''+level.toLowerCase()+'Count').textContent=equipment.filter(e=>e.maintenance_priority===level).length;
       const tbody=$('equipmentRows');tbody.replaceChildren();
@@ -139,6 +159,40 @@
         box.append(title,meta,description);list.append(box);
       }
     }
+    function manilaToday(){
+      const parts=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Manila',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+      const get=type=>parts.find(part=>part.type===type).value;
+      return `${get('year')}-${get('month')}-${get('day')}`;
+    }
+    async function loadInspections(){
+      const list=$('inspectionList');list.textContent='Loading inspection records…';
+      const {data,error}=await client.from('inspections').select('inspection_number,traffic_signal_id,inspection_type,scheduled_date,inspection_status,inspection_date,equipment_condition,findings').order('scheduled_date',{ascending:false}).limit(60);
+      if(error){list.textContent='Could not retrieve inspections: '+error.message;return;}
+      list.replaceChildren();
+      if(!data?.length){list.textContent='No inspection records available.';return;}
+      const today=manilaToday();
+      for(const item of data){
+        const box=document.createElement('article');box.className='defect-item';
+        const title=document.createElement('strong');title.textContent=(equipment.find(x=>x.id===item.traffic_signal_id)?.equipment_id||'Equipment')+' · '+item.inspection_type+' inspection';
+        const meta=document.createElement('div');meta.className='defect-meta';
+        const overdue=['Scheduled','In Progress'].includes(item.inspection_status)&&item.scheduled_date<today;
+        for(const value of [item.inspection_number,'Scheduled: '+item.scheduled_date,overdue?'Overdue':item.inspection_status,item.equipment_condition||'Condition not assessed']){const span=document.createElement('span');span.textContent=value;meta.append(span);}
+        const note=document.createElement('p');note.textContent=item.findings||'No inspection findings recorded yet.';
+        box.append(title,meta,note);list.append(box);
+      }
+    }
+    $('inspectionForm').addEventListener('submit',async event=>{
+      event.preventDefault();const message=$('inspectionMessage'),button=$('scheduleInspection');
+      if(!['admin','engineer'].includes(currentRole)){message.textContent='Only administrators and engineers can schedule inspections.';return;}
+      const traffic_signal_id=$('inspectionSignal').value,scheduled_date=$('inspectionDate').value;
+      if(!equipment.some(item=>item.id===traffic_signal_id)){message.textContent='Select a valid traffic signal.';return;}
+      if(!scheduled_date||scheduled_date<manilaToday()){message.textContent='Choose today or a future date.';return;}
+      button.disabled=true;message.textContent='Saving inspection…';
+      const {error}=await client.from('inspections').insert({traffic_signal_id,inspection_type:$('inspectionType').value,scheduled_date,inspection_status:'Scheduled'});
+      button.disabled=false;
+      if(error){message.textContent='Unable to schedule: '+error.message;return;}
+      message.textContent='Inspection scheduled successfully.';$('inspectionForm').reset();await Promise.all([loadInspections(),loadEquipment()]);
+    });
     $('defectForm').addEventListener('submit',async event=>{
       event.preventDefault();
       const btn=$('submitDefect'), message=$('defectMessage');
@@ -158,7 +212,7 @@
       const {data:{user},error}=await client.auth.getUser();if(error||!user){showLogin();return;}
       const {data:profile,error:profileError}=await client.from('profiles').select('role').eq('id',user.id).single();
       if(profileError||!['admin','engineer','maintenance'].includes(profile?.role)){await client.auth.signOut();showLogin('Your account is pending approval or lacks a valid profile.');return;}
-      currentRole=profile.role;showApp();await loadEquipment();await loadDefects();
+      currentRole=profile.role;showApp();$('scheduleInspection').disabled=currentRole==='maintenance';$('inspectionDate').min=manilaToday();await loadEquipment();await Promise.all([loadDefects(),loadInspections()]);
     }
     $('loginForm').addEventListener('submit',async e=>{
       e.preventDefault();if(!client){$('loginMessage').textContent='Set your Supabase URL and publishable key in the HTML first.';return;}
@@ -172,6 +226,8 @@
     $('refreshButton').addEventListener('click',loadEquipment);
     $('equipmentNav').addEventListener('click',()=>$('equipmentPanel').scrollIntoView({behavior:'smooth'}));
     $('defectsNav').addEventListener('click',()=>$('defectsPanel').scrollIntoView({behavior:'smooth'}));
+    $('inspectionsNav').addEventListener('click',()=>$('inspectionsPanel').scrollIntoView({behavior:'smooth'}));
+    $('refreshInspections').addEventListener('click',loadInspections);
     $('reloadDefects').addEventListener('click',loadDefects);
     $('closeDetails').addEventListener('click',()=>$('detailsPanel').classList.add('hidden'));
     if(!configured)showLogin('Setup required: add your Supabase project URL and publishable key.');
