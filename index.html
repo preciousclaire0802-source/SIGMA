@@ -105,6 +105,7 @@
         <form id="maintenanceForm">
           <div class="form-grid">
             <label>Traffic signal<select id="maintenanceSignal" required><option value="">Select equipment</option></select></label>
+            <label>Related unresolved defect (optional)<select id="maintenanceDefect"><option value="">No specific defect / routine maintenance</option></select></label>
             <label>Maintenance type<select id="maintenanceType" required><option>Corrective</option><option>Preventive</option><option>Routine</option><option>Emergency</option></select></label>
             <label>Task priority<select id="maintenancePriority" required><option>Moderate</option><option>Low</option><option>High</option></select></label>
             <label>Scheduled date<input id="maintenanceDate" type="date" required /></label>
@@ -132,6 +133,7 @@
     const configured = SUPABASE_URL.startsWith('https://') && !SUPABASE_PUBLISHABLE_KEY.startsWith('PASTE_');
     const client = configured ? createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY) : null;
     let equipment = [];
+    let unresolvedDefects = [];
     let currentRole = null;
 
     function showLogin(message = '') {
@@ -153,6 +155,7 @@
       $('defectSignal').value=item.id;
       $('inspectionSignal').value=item.id;
       $('maintenanceSignal').value=item.id;
+      updateMaintenanceDefectOptions();
       $('detailsPanel').classList.remove('hidden');$('detailsPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
     }
     async function loadEquipment(){
@@ -172,6 +175,7 @@
       $('defectSignal').value=previouslySelected;
       $('inspectionSignal').value=inspectionSelected;
       $('maintenanceSignal').value=maintenanceSelected;
+      updateMaintenanceDefectOptions();
       $('totalCount').textContent=equipment.length;
       for(const level of ['High','Moderate','Low']) $(''+level.toLowerCase()+'Count').textContent=equipment.filter(e=>e.maintenance_priority===level).length;
       const tbody=$('equipmentRows');tbody.replaceChildren();
@@ -193,6 +197,19 @@
         const description=document.createElement('p');description.textContent=item.defect_description;
         box.append(title,meta,description);list.append(box);
       }
+    }
+    function updateMaintenanceDefectOptions(){
+      const field=$('maintenanceDefect'),previous=field.value,signalId=$('maintenanceSignal').value;
+      field.replaceChildren(new Option('No specific defect / routine maintenance',''));
+      for(const defect of unresolvedDefects.filter(d=>d.traffic_signal_id===signalId)){
+        field.add(new Option(defect.defect_number+' · '+defect.severity+' · '+defect.defect_title,defect.id));
+      }
+      if([...field.options].some(option=>option.value===previous))field.value=previous;
+    }
+    async function loadAvailableDefects(){
+      const {data,error}=await client.from('defect_reports').select('id,defect_number,traffic_signal_id,defect_title,severity,status').in('status',['Open','In Progress']).order('reported_at',{ascending:false});
+      if(error){$('maintenanceMessage').textContent='Unable to load available defects: '+error.message;return;}
+      unresolvedDefects=data||[];updateMaintenanceDefectOptions();
     }
     function manilaToday(){
       const parts=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Manila',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
@@ -255,14 +272,15 @@
     });
     async function loadMaintenance(){
       const list=$('maintenanceList');list.textContent='Loading maintenance tasks…';
-      const {data,error}=await client.from('maintenance_records').select('id,maintenance_number,traffic_signal_id,maintenance_type,maintenance_title,maintenance_description,priority,scheduled_date,maintenance_status,verification_status,actions_taken,verification_notes,assigned_personnel').order('created_at',{ascending:false}).limit(60);
+      const {data,error}=await client.from('maintenance_records').select('id,maintenance_number,traffic_signal_id,defect_id,maintenance_type,maintenance_title,maintenance_description,priority,scheduled_date,maintenance_status,verification_status,actions_taken,verification_notes,assigned_personnel').order('created_at',{ascending:false}).limit(60);
       if(error){list.textContent='Could not retrieve tasks: '+error.message;return;}
       list.replaceChildren();if(!data?.length){list.textContent='No maintenance tasks recorded yet.';return;}
       for(const item of data){
         const box=document.createElement('article');box.className='defect-item';
         const title=document.createElement('strong');title.textContent=(equipment.find(x=>x.id===item.traffic_signal_id)?.equipment_id||'Equipment')+' · '+item.maintenance_title;
         const meta=document.createElement('div');meta.className='defect-meta';
-        for(const value of [item.maintenance_number,item.maintenance_type,item.priority+' task priority',item.maintenance_status,item.scheduled_date||'Unscheduled',item.verification_status]){const span=document.createElement('span');span.textContent=value;meta.append(span);}
+        const linkedDefect=unresolvedDefects.find(d=>d.id===item.defect_id);
+        for(const value of [item.maintenance_number,item.maintenance_type,item.priority+' task priority',item.maintenance_status,item.scheduled_date||'Unscheduled',item.verification_status,item.defect_id?(linkedDefect?.defect_number||'Linked defect'):'No linked defect']){const span=document.createElement('span');span.textContent=value;meta.append(span);}
         const description=document.createElement('p');description.textContent=item.maintenance_description||'No task description provided.';
         box.append(title,meta,description);
         if(item.actions_taken){const actions=document.createElement('p');actions.textContent='Repair actions: '+item.actions_taken;box.append(actions);}
@@ -314,12 +332,14 @@
       const maintenance_title=$('maintenanceTitle').value.trim();
       if(!equipment.some(item=>item.id===traffic_signal_id)||!maintenance_title){message.textContent='Select equipment and enter a task title.';return;}
       if(!scheduled_date||scheduled_date<manilaToday()){message.textContent='Choose today or a future date.';return;}
-      const payload={traffic_signal_id,maintenance_type:$('maintenanceType').value,priority:$('maintenancePriority').value,scheduled_date,maintenance_title,maintenance_description:$('maintenanceDescription').value.trim()||null,maintenance_status:'Pending'};
+      const defect_id=$('maintenanceDefect').value||null;
+      if(defect_id&&!unresolvedDefects.some(d=>d.id===defect_id&&d.traffic_signal_id===traffic_signal_id)){message.textContent='Choose a defect reported for the selected equipment.';return;}
+      const payload={traffic_signal_id,defect_id,maintenance_type:$('maintenanceType').value,priority:$('maintenancePriority').value,scheduled_date,maintenance_title,maintenance_description:$('maintenanceDescription').value.trim()||null,maintenance_status:'Pending'};
       button.disabled=true;message.textContent='Saving maintenance task…';
       const {error}=await client.from('maintenance_records').insert(payload);
       button.disabled=false;
       if(error){message.textContent='Task was not saved: '+error.message;return;}
-      message.textContent='Maintenance task created successfully.';$('maintenanceForm').reset();await loadMaintenance();
+      message.textContent='Maintenance task created successfully.';$('maintenanceForm').reset();updateMaintenanceDefectOptions();await loadMaintenance();
     });
     $('defectForm').addEventListener('submit',async event=>{
       event.preventDefault();
@@ -334,13 +354,13 @@
       btn.disabled=false;
       if(error){message.textContent='Report not saved: '+error.message;return;}
       message.textContent='Defect saved successfully.';$('defectForm').reset();
-      $('detailsPanel').classList.add('hidden');await Promise.all([loadEquipment(),loadDefects()]);
+      $('detailsPanel').classList.add('hidden');await Promise.all([loadEquipment(),loadDefects(),loadAvailableDefects()]);
     });
     async function enterApp(){
       const {data:{user},error}=await client.auth.getUser();if(error||!user){showLogin();return;}
       const {data:profile,error:profileError}=await client.from('profiles').select('role').eq('id',user.id).single();
       if(profileError||!['admin','engineer','maintenance'].includes(profile?.role)){await client.auth.signOut();showLogin('Your account is pending approval or lacks a valid profile.');return;}
-      currentRole=profile.role;showApp();$('scheduleInspection').disabled=currentRole==='maintenance';$('completeInspection').disabled=currentRole==='maintenance';$('createMaintenance').disabled=currentRole==='maintenance';$('inspectionDate').min=manilaToday();$('maintenanceDate').min=manilaToday();await loadEquipment();await Promise.all([loadDefects(),loadInspections(),loadMaintenance()]);
+      currentRole=profile.role;showApp();$('scheduleInspection').disabled=currentRole==='maintenance';$('completeInspection').disabled=currentRole==='maintenance';$('createMaintenance').disabled=currentRole==='maintenance';$('inspectionDate').min=manilaToday();$('maintenanceDate').min=manilaToday();await loadEquipment();await Promise.all([loadDefects(),loadAvailableDefects(),loadInspections(),loadMaintenance()]);
     }
     $('loginForm').addEventListener('submit',async e=>{
       e.preventDefault();if(!client){$('loginMessage').textContent='Set your Supabase URL and publishable key in the HTML first.';return;}
@@ -357,6 +377,7 @@
     $('inspectionsNav').addEventListener('click',()=>$('inspectionsPanel').scrollIntoView({behavior:'smooth'}));
     $('maintenanceNav').addEventListener('click',()=>$('maintenancePanel').scrollIntoView({behavior:'smooth'}));
     $('refreshMaintenance').addEventListener('click',loadMaintenance);
+    $('maintenanceSignal').addEventListener('change',updateMaintenanceDefectOptions);
     $('refreshInspections').addEventListener('click',loadInspections);
     $('reloadDefects').addEventListener('click',loadDefects);
     $('closeDetails').addEventListener('click',()=>$('detailsPanel').classList.add('hidden'));
