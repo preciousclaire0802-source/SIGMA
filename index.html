@@ -144,6 +144,36 @@
     @media(max-height:750px){#appScreen .action-hint{display:none}#appScreen .workspace-box.action-launcher{justify-content:center}#appScreen .panel>.section-head{padding-bottom:7px}#appScreen .workspace-view .section-head h2{font-size:18px}}
     @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
   </style>
+  <style>
+    /* Enhanced liquid-glass materials: translucent, layered and reflective. */
+    body{background:#070d1b;background-image:radial-gradient(circle at 84% 8%,#9f375449,transparent 34%),radial-gradient(circle at 14% 79%,#436a5646,transparent 37%),radial-gradient(circle at 58% 98%,#9b7a3e26,transparent 30%),linear-gradient(125deg,#070d1b,#10172a 56%,#151521)}
+    .panel,.card,.overview-summary,.report-block,#appScreen .workspace-box,.defect-item{
+      position:relative;
+      border:1px solid transparent;
+      background:linear-gradient(147deg,#ffffff22 0%,#ffffff0b 22%,#0b132452 65%,#732e3a17 100%) padding-box,linear-gradient(130deg,#f5e6c27a,#ffffff20 33%,#ffffff07 66%,#d4a56165) border-box;
+      box-shadow:inset 0 1px 0 #ffffff4a,inset 1px 0 0 #ffffff0c,inset 0 -1px 0 #080c1766,0 18px 40px #0005;
+      -webkit-backdrop-filter:blur(32px) saturate(165%) brightness(1.06);
+      backdrop-filter:blur(32px) saturate(165%) brightness(1.06);
+      transition:border-color .25s ease,box-shadow .25s ease,transform .25s ease;
+    }
+    .panel::before,.card::before,.report-block::before,.workspace-box::before{
+      content:"";pointer-events:none;position:absolute;left:2%;right:2%;top:1px;height:42%;border-radius:inherit;
+      background:linear-gradient(180deg,#ffffff0e 0%,#ffffff04 34%,transparent 100%);mask-image:linear-gradient(180deg,#000,transparent);z-index:0;
+    }
+    .panel>* ,.card>* ,.report-block>* ,.workspace-box>*{position:relative;z-index:1}
+    .card:hover,.defect-item:hover,.report-block:hover{border-color:#f0cb836b;box-shadow:inset 0 1px 0 #ffffff65,0 18px 38px #0006,0 0 25px #c89f4720}
+    #appScreen aside{background:linear-gradient(152deg,#2830457a,#0b1222cf 42%,#361e2a8a);border-right:1px solid #e4d1a83b;box-shadow:inset -1px 0 #ffffff12,8px 0 32px #0005;backdrop-filter:blur(42px) saturate(145%);-webkit-backdrop-filter:blur(42px) saturate(145%)}
+    .nav button.active{background:linear-gradient(112deg,#b1466280,#722d506b 65%,#d8b76a14);border:1px solid #e7cf9d55;box-shadow:inset 0 1px 0 #ffffff43,inset 3px 0 0 #f2d084,0 8px 22px #2b112765}
+    .outline,.primary{position:relative;overflow:hidden;transition:filter .2s,transform .2s,box-shadow .2s}
+    .primary::before,.outline::before{content:"";position:absolute;pointer-events:none;inset:1px;border-radius:inherit;background:linear-gradient(174deg,#ffffff47 0%,transparent 42%);opacity:.37}
+    .primary:hover,.outline:hover{transform:translateY(-1px);filter:brightness(1.08)}
+    .primary:active,.outline:active{transform:translateY(0)}
+    .primary:focus-visible,.outline:focus-visible,.nav button:focus-visible{outline:2px solid #f0d594;outline-offset:2px}
+    .sigma-modal{border:1px solid #fae3b37d;background:linear-gradient(125deg,#384256d9,#171f31e9 60%,#442435d8);box-shadow:inset 0 1px 0 #ffffff5f,0 30px 90px #000c;-webkit-backdrop-filter:blur(42px) saturate(155%);backdrop-filter:blur(42px) saturate(155%)}
+    .login-card{background:linear-gradient(135deg,#ffffff27,#202a3acc 35%,#351b2baf);border:1px solid #e8d8b679;box-shadow:inset 0 1px 0 #ffffff55,0 30px 90px #000b;backdrop-filter:blur(36px) saturate(155%);-webkit-backdrop-filter:blur(36px) saturate(155%)}
+    .badge{backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:inset 0 1px 0 #ffffff22}
+    @media(prefers-reduced-motion:reduce){.panel,.card,.report-block,.workspace-box,.outline,.primary{transition:none!important;transform:none!important}}
+  </style>
 </head>
 <body>
   <section id="loginScreen" class="login-wrap">
@@ -314,6 +344,7 @@
       maintenanceArea.append(workspaceBox([$('maintenanceForm')]),workspaceBox([$('maintenanceList').previousElementSibling,$('maintenanceList')],'list-scroll'));
       maintenance.append(maintenanceArea);
       setupActionModals();
+      setupReportExportModal();
       for(const id of Object.keys(viewTitles))$(id).classList.add('workspace-view');
       switchView('overviewPanel');
     }
@@ -325,7 +356,10 @@
       const close=document.createElement('button');close.className='outline';close.type='button';close.textContent='✕ Close';close.addEventListener('click',()=>dialog.close());
       head.append(title,close);
       const body=document.createElement('div');body.className='modal-body';body.id='actionDialogBody';dialog.append(head,body);document.body.append(dialog);
-      dialog.addEventListener('close',()=>{for(const form of [...body.querySelectorAll('form')])storage.append(form);});
+      dialog.addEventListener('close',()=>{
+        for(const form of [...body.querySelectorAll('form')])storage.append(form);
+        const exports=body.querySelector('#exportBundle');if(exports)storage.append(exports);
+      });
       const configure=(section,forms,description)=>{
         const left=$(section).querySelector('.workspace-columns .workspace-box');
         // Preserve the live form nodes before clearing their old container.
@@ -348,6 +382,22 @@
       configure('defectsPanel',[['defectForm','Report new defect']],'Record observed defects and review the history alongside. Verified repairs can be closed from the record list.');
       configure('inspectionsPanel',[['inspectionForm','Schedule inspection'],['completionForm','Complete inspection']],'Schedule upcoming assessments or document a completed site inspection.');
       configure('maintenancePanel',[['maintenanceForm','Create maintenance task']],'Register new maintenance work. Start, complete, and verify existing tasks in the register.');
+    }
+    function setupReportExportModal(){
+      const panel=$('reportsPanel'),storage=$('formStorage');
+      const heading=[...panel.querySelectorAll('h3')].find(node=>node.textContent.trim()==='Export records');
+      const description=heading?.nextElementSibling;
+      const downloads=panel.querySelector('.downloads'),message=$('reportMessage');
+      const bundle=document.createElement('div');bundle.id='exportBundle';
+      if(description)bundle.append(description);
+      bundle.append(downloads,message);storage.append(bundle);heading?.remove();
+      const button=document.createElement('button');button.id='openExports';button.type='button';button.className='outline';button.textContent='↓ Export CSV';
+      panel.querySelector('.section-head').insertBefore(button,$('refreshReports'));
+      button.addEventListener('click',()=>{
+        $('actionDialogTitle').textContent='Export SIGMA reports';
+        $('actionDialogBody').replaceChildren(bundle);
+        $('actionDialog').showModal();
+      });
     }
     function openNoteDialog(title,description,onSubmit){
       const dialog=$('actionDialog'),body=$('actionDialogBody');
