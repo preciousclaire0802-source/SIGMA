@@ -276,11 +276,17 @@
       dialog.addEventListener('close',()=>{for(const form of [...body.querySelectorAll('form')])storage.append(form);});
       const configure=(section,forms,description)=>{
         const left=$(section).querySelector('.workspace-columns .workspace-box');
+        // Preserve the live form nodes before clearing their old container.
+        const retained=forms.map(([formId,label])=>{
+          const form=$(formId);
+          if(!form)throw new Error('Missing form: '+formId);
+          storage.append(form);
+          return [form,label];
+        });
         left.replaceChildren();left.classList.add('action-launcher');
         const heading=document.createElement('h3');heading.textContent='Workspace actions';left.append(heading);
         const text=document.createElement('p');text.textContent=description;left.append(text);
-        for(const [formId,label] of forms){
-          const form=$(formId);storage.append(form);
+        for(const [form,label] of retained){
           const button=document.createElement('button');button.type='button';button.className='primary';button.textContent='＋ '+label;
           button.addEventListener('click',()=>{title.textContent=label;body.replaceChildren(form);dialog.showModal();});
           left.append(button);
