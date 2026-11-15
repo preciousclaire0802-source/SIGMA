@@ -266,6 +266,76 @@
     .login-wrap{background:radial-gradient(circle at 15% 13%,#a5486261,transparent 34%),radial-gradient(circle at 84% 78%,#527a5852,transparent 38%),#080f21}
     @media(prefers-reduced-motion:reduce){.primary,.outline,.nav button,.pager button{transition:none!important;transform:none!important}}
   </style>
+  <style>
+    /* Contrast pass: tinted glass stays glossy while labels remain readable. */
+    :root{--text:#f8fbff;--muted:#d4dfeb;--gold:#f2d18b;--moss:#88ba95;--crimson:#a73b59;color:var(--text);color-scheme:dark}
+    body,.app{color:#f8fbff}
+    .panel,.card,.overview-summary,.report-block,#appScreen .workspace-box,.defect-item{
+      color:#f8fbff;
+      background:linear-gradient(155deg,#34465bdc 0%,#22344be9 23%,#19283eec 62%,#121f32f2 100%) padding-box,
+                 linear-gradient(137deg,#ffe4b5e5,#c8cfe171 28%,#74889b50 61%,#edc77eaa 100%) border-box;
+      box-shadow:inset 0 2px 1px #ffffff40,inset 0 -2px 1px #060a15aa,0 16px 37px #0008;
+    }
+    .panel::before,.card::before,.report-block::before,.workspace-box::before{opacity:.24}
+    .primary::before,.outline::before,.nav button::before{height:23%;opacity:.26;top:1px;background:linear-gradient(180deg,#ffffffba,transparent)}
+    .primary::after,.outline::after,.nav button::after{opacity:.48}
+
+    /* Primary copy and navigation: bright, opaque labels on deep backgrounds. */
+    h1,h2,h3,h4,.logo,.panel h2,.panel h3,.section-head h2,.workspace-box h3,.report-block h3,
+    .card strong,.detail b,.summary-row strong{color:#ffffff;text-shadow:0 1px 2px #050a15a6}
+    .panel h3,.workspace-box h3,.report-block h3,.eyebrow{color:#ffe0a5}
+    .muted,.subtitle,.foot,.side-note,.card span,.empty,.action-launcher p,
+    .defect-item p,.form-grid label,.field,.form-status,.detail small,.summary-row,
+    .defect-meta,.bar-top,.pager,.action-hint{color:#d8e3f0}
+    .eyebrow,.summary-row strong,.pager{color:#ffdc99}
+    .nav button{color:#f1f4fa;font-weight:650;text-shadow:0 1px 2px #000c}
+    .nav button.active{background:linear-gradient(155deg,#a84a66 0%,#762942 70%,#54243b);color:#fff9e9;border-color:#f5dba3}
+    .nav button:not(.active):hover{color:#ffffff;background:#2b3b50}
+    .side-note{color:#c8d4e4}
+
+    /* Action buttons: gold carries dark lettering; every dark button carries white. */
+    .primary,.action-launcher .primary,.actions .primary{color:#141b2a!important;text-shadow:none!important;font-weight:850}
+    .outline,.pager button,.downloads button,.action-launcher .outline{
+      color:#fdfcff!important;text-shadow:0 1px 1px #070d18;
+      background:linear-gradient(165deg,#4c6077ed,#293b53ed 42%,#192a40f2);
+      border-color:#d5dfeaab;
+      box-shadow:inset 0 1px 1px #ffffff8e,inset 0 -2px 2px #090f1da8,0 4px 12px #0006
+    }
+    .outline:hover,.pager button:hover:not(:disabled){background:linear-gradient(160deg,#58708bf4,#30455ff5 65%,#1c3046f2);color:#ffffff!important}
+    button:disabled{opacity:.64}
+
+    /* Data must remain readable at a glance. */
+    th{background:#1d2c41;color:#ffe1a6;font-weight:800}
+    td{color:#f4f7fc}
+    tbody tr:hover{background:#35465d}
+    .table-wrap,.detail,.action-hint{background:linear-gradient(145deg,#2b3c51e8,#15243aef);border-color:#aebdd066}
+    .detail small{color:#d1dcea}
+    .card span{font-weight:650;color:#e0eaf5}
+    .card .green{color:#a3e6b6}.card .yellow{color:#ffe09c}.card .red{color:#ffacbe}
+    .bar-top{font-weight:650;color:#eef3fb}
+    .bar-bg{background:#0d192a}
+    .badge{font-weight:800;text-shadow:0 1px 1px #060914}
+    .badge.Low{color:#e1ffe8;background:linear-gradient(#4f8665,#2b5c41)}
+    .badge.Moderate{color:#fff5d5;background:linear-gradient(#9c7437,#775627)}
+    .badge.High{color:#fff0f4;background:linear-gradient(#a74761,#792a45)}
+    .alert{background:#28364aeb;color:#ffe8c2;border-color:#f2d18b7a;font-weight:550}
+    .form-status,.notice{color:#b8f2d0}
+    .form-grid input,.form-grid select,.form-grid textarea,input{
+      color:#ffffff!important;background:linear-gradient(#15253bec,#111e31f6)!important;
+      border-color:#becde58a!important;
+    }
+    input::placeholder,textarea::placeholder{color:#bac8db!important;opacity:1}
+    label,.form-grid label{color:#f2f5fa}
+    .form-grid select option{background:#15253b;color:#fff}
+    .sigma-modal,.login-card{color:#ffffff;background:linear-gradient(143deg,#344960f8,#18273cfb 45%,#18253afa 70%,#33263bea);border-color:#f4dcaa9e}
+    .modal-head h2,.login-card h1{color:#ffffff}
+    .login-card .muted,.login-card .field,.login-card .foot{color:#e0e8f2}
+    .action-hint{color:#f7e8cc}
+    a{color:#ffe0a3}
+    a:hover{color:#fff0cf}
+
+    @media (prefers-contrast:more){.panel,.card,.overview-summary,.report-block,#appScreen .workspace-box,.defect-item{background:#132236;border-color:#f4dca4}.muted,.subtitle,.foot,.side-note{color:#f0f4f9}}
+  </style>
 </head>
 <body>
   <section id="loginScreen" class="login-wrap">
