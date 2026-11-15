@@ -174,6 +174,98 @@
     .badge{backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:inset 0 1px 0 #ffffff22}
     @media(prefers-reduced-motion:reduce){.panel,.card,.report-block,.workspace-box,.outline,.primary{transition:none!important;transform:none!important}}
   </style>
+  <style>
+    /* Optically raised liquid-glass controls, inspired by the supplied reference. */
+    :root{--glass-cream:#fff0cc;--glass-gold:#dfbe78;--glass-rose:#ae465c;--glass-moss:#648b67}
+    body{background-color:#070c1a;background-image:radial-gradient(ellipse at 87% 5%,#8e253c51,transparent 42%),radial-gradient(ellipse at 6% 90%,#527a5840,transparent 43%),radial-gradient(ellipse at 57% 104%,#bb96512a,transparent 48%),linear-gradient(132deg,#070c1a 0%,#101a2b 54%,#15111c 100%)}
+    #appScreen aside{background:linear-gradient(156deg,#283449b0 0%,#111929dd 43%,#2f1825bc 100%);border-right:1px solid #e8d7ae5c;box-shadow:inset -1px 0 0 #ffffff17,8px 0 32px #03071382}
+    .panel,.card,.overview-summary,.report-block,#appScreen .workspace-box,.defect-item{
+      border:1px solid transparent;
+      background:linear-gradient(145deg,#ffffff24 0%,#ffffff0d 18%,#2532469d 55%,#111827ba 100%) padding-box,linear-gradient(138deg,#fff4d6a8 0%,#ffffff28 24%,#ffffff0d 54%,#d4a46888 100%) border-box;
+      box-shadow:inset 0 2px 1px #ffffff50,inset 0 -2px 1px #06091473,0 6px 10px #0003,0 18px 38px #0006,0 0 30px #b3833510;
+      -webkit-backdrop-filter:blur(34px) saturate(165%);backdrop-filter:blur(34px) saturate(165%);
+    }
+    .panel,.overview-summary{border-radius:25px}
+    .card,.report-block,#appScreen .workspace-box{border-radius:21px}
+    .defect-item{border-radius:16px}
+    .panel::before,.card::before,.report-block::before,.workspace-box::before{
+      content:"";position:absolute;pointer-events:none;z-index:0;top:1px;left:3%;right:3%;height:31%;border-radius:inherit;
+      background:linear-gradient(180deg,#ffffff2b,#ffffff08 36%,transparent 100%);-webkit-mask-image:linear-gradient(#000,transparent);mask-image:linear-gradient(#000,transparent)
+    }
+    .panel::after,.card::after,.report-block::after,.workspace-box::after{
+      content:"";position:absolute;pointer-events:none;z-index:0;left:8%;right:8%;bottom:1px;height:2px;border-radius:100%;
+      background:linear-gradient(90deg,transparent,#8e253c66 18%,#e7c77c96 51%,#527a587d 82%,transparent);filter:blur(.6px);opacity:.78
+    }
+    .panel>*,.card>*,.report-block>*,.workspace-box>*{position:relative;z-index:1}
+    .card:hover,.report-block:hover,.defect-item:hover{border-color:transparent;box-shadow:inset 0 2px 1px #ffffff6b,inset 0 -2px 1px #06091473,0 16px 36px #0008,0 0 24px #d9b66c34}
+
+    /* Capsule buttons with convex highlights and a tiny rainbow-like palette glint. */
+    .primary,.outline,.pager button,.nav button{
+      position:relative;isolation:isolate;overflow:hidden;border-radius:999px;
+      transition:background .24s ease,box-shadow .24s ease,filter .24s ease,transform .24s ease;
+    }
+    .primary{
+      color:#171b1c;border:1px solid #ffe9b4;
+      background:linear-gradient(178deg,#fff2c2 0%,#e6c678 18%,#cca052 66%,#a8763e 100%);
+      box-shadow:inset 0 2px 1px #fffad8eb,inset 0 -3px 2px #64432080,0 3px 0 #7d613eaa,0 9px 19px #b78a3b4a,0 0 17px #e1b25f26;
+      text-shadow:0 1px #fff6dd76;
+    }
+    .outline,.pager button{
+      color:#fff4e7;border:1px solid #e8d8b3a8;
+      background:linear-gradient(165deg,#ffffff39 0%,#ffffff12 35%,#7786a11a 70%,#191b2a70 100%);
+      box-shadow:inset 0 2px 1px #ffffff78,inset 0 -2px 2px #050a15b5,0 3px 0 #03081055,0 7px 15px #0006;
+      -webkit-backdrop-filter:blur(18px) saturate(145%);backdrop-filter:blur(18px) saturate(145%);
+    }
+    .primary::before,.outline::before,.nav button::before{
+      content:"";position:absolute;pointer-events:none;z-index:0;inset:2px 6px auto;height:42%;border-radius:999px;
+      background:linear-gradient(180deg,#ffffff9c 0%,#ffffff38 32%,transparent 100%);opacity:.7;
+    }
+    .primary::after,.outline::after,.nav button::after{
+      content:"";position:absolute;pointer-events:none;left:13%;right:13%;bottom:1px;height:3px;border-radius:100%;
+      background:linear-gradient(90deg,transparent,#b64d66aa 19%,#ffe9b1d4 52%,#6aa878aa 82%,transparent);filter:blur(1px);opacity:.9;
+    }
+    .primary:hover,.outline:hover,.pager button:hover:not(:disabled){filter:brightness(1.12) saturate(1.1);transform:translateY(-1px);box-shadow:inset 0 2px 1px #ffffffbc,inset 0 -2px 2px #07091488,0 5px 0 #0c111b55,0 12px 22px #0007,0 0 24px #dfbd7152}
+    .primary:active,.outline:active,.pager button:active{transform:translateY(1px);box-shadow:inset 0 3px 7px #06091444,0 2px 5px #0005}
+    button:disabled{filter:saturate(.55);opacity:.53;cursor:not-allowed;transform:none!important}
+    .nav button{border:1px solid transparent;color:#dfdfdd;box-shadow:none;text-shadow:0 1px #0007}
+    .nav button:not(.active):hover{background:linear-gradient(165deg,#ffffff2b,#ffffff0b);border-color:#ffffff31;box-shadow:inset 0 1px 1px #ffffff45,0 5px 13px #0004}
+    .nav button.active{
+      color:#fff6e4;border:1px solid #efcbaa9c;
+      background:linear-gradient(155deg,#ce687dba 0%,#933a53cc 39%,#632b43b4 85%);
+      box-shadow:inset 0 2px 2px #ffe4ef85,inset 0 -3px 2px #28101f8a,inset 4px 0 0 #f9d992,0 3px 0 #3e1724,0 9px 18px #170a1669;
+    }
+    .nav button:not(.active)::after{opacity:.38}
+    .emblem{border:1px solid #ffdab18f;border-radius:16px;background:linear-gradient(135deg,#b34d64,#5f263c 62%,#321b34);box-shadow:inset 0 2px 2px #ffffff73,inset 0 -3px 3px #1a0c17,0 5px 12px #0007,0 0 15px #a53b5454}
+
+    /* Recessed glass input wells and embossed status chips. */
+    input,.form-grid input,.form-grid select,.form-grid textarea{
+      background:linear-gradient(160deg,#0b1424e3,#1b2a3dc2)!important;color:#f9f4ee!important;
+      border:1px solid #f2dcb06b!important;border-radius:15px;
+      box-shadow:inset 0 3px 7px #030711d4,inset 0 1px 1px #ffffff33,0 1px 0 #ffffff1c;
+      -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)
+    }
+    input:focus,.form-grid input:focus,.form-grid select:focus,.form-grid textarea:focus{outline:2px solid #f0d58c66!important;outline-offset:1px;box-shadow:inset 0 3px 7px #030711ba,0 0 0 3px #d8b76a22,0 0 17px #d8b76a30}
+    .form-grid select option{background:#152033;color:#fff5e8}
+    .detail,.action-hint,.alert,.table-wrap{
+      border:1px solid #e9d7b640;background:linear-gradient(145deg,#ffffff15,#1620359b 68%,#1118278a);
+      box-shadow:inset 0 1px 1px #ffffff3a,inset 0 -1px 2px #060a175b;
+      -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)
+    }
+    .detail{border-radius:15px}.alert{border-left:3px solid #f2d28f;border-radius:15px}
+    .badge{border:1px solid #ffffff5c;border-radius:999px;box-shadow:inset 0 1px 1px #ffffff73,inset 0 -2px 2px #0004,0 3px 10px #0003}
+    .badge.High{background:linear-gradient(#b8506cbb,#64263cc2);color:#ffe3ec}.badge.Moderate{background:linear-gradient(#bc9d61b9,#614929bd);color:#ffe9bd}.badge.Low{background:linear-gradient(#64936cbd,#294c38cf);color:#dcffe0}
+    .bar-bg{box-shadow:inset 0 2px 4px #0009,inset 0 1px 0 #ffffff17}.bar-fill{box-shadow:inset 0 2px 2px #ffffff75,0 0 12px #779e6c5c}.bar-fill.warn{box-shadow:inset 0 2px 2px #fff7d179,0 0 11px #d8b76a4d}.bar-fill.danger{box-shadow:inset 0 2px 2px #fcd3dc75,0 0 11px #ae465c55}
+
+    .sigma-modal,.login-card{
+      border:1px solid #ffecb7b0;border-radius:28px;
+      background:linear-gradient(140deg,#3a4b62df 0%,#1e2b40f3 26%,#151b2af5 70%,#3f2538d9 100%);
+      box-shadow:inset 0 2px 1px #ffffff9c,inset 0 -3px 2px #0509158c,0 12px 28px #0008,0 37px 100px #000c,0 0 36px #ddb4671c;
+      -webkit-backdrop-filter:blur(42px) saturate(170%);backdrop-filter:blur(42px) saturate(170%);
+    }
+    .modal-head{background:linear-gradient(180deg,#ffffff15,transparent);border-bottom-color:#f3dcaa46}
+    .login-wrap{background:radial-gradient(circle at 15% 13%,#a5486261,transparent 34%),radial-gradient(circle at 84% 78%,#527a5852,transparent 38%),#080f21}
+    @media(prefers-reduced-motion:reduce){.primary,.outline,.nav button,.pager button{transition:none!important;transform:none!important}}
+  </style>
 </head>
 <body>
   <section id="loginScreen" class="login-wrap">
