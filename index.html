@@ -83,6 +83,18 @@
           </div>
           <div class="actions"><button id="scheduleInspection" type="submit" class="primary">Schedule inspection</button><span id="inspectionMessage" class="form-status" role="status"></span></div>
         </form>
+        <div style="border-top:1px solid #315362;margin:27px 0 22px"></div>
+        <h3>Complete an inspection</h3>
+        <p class="muted">Record observations from an inspection that was actually performed. Completing an inspection updates the equipment's recorded condition but does not resolve open defects.</p>
+        <form id="completionForm">
+          <div class="form-grid">
+            <label class="full">Pending inspection<select id="completionInspection" required><option value="">Select a scheduled inspection</option></select></label>
+            <label>Observed equipment condition<select id="completionCondition" required><option value="">Select condition</option><option>Good</option><option>Fair</option><option>Poor</option><option>Unknown</option></select></label>
+            <label class="full">Inspection findings<textarea id="completionFindings" required maxlength="3000" placeholder="Record the condition you observed and any relevant evidence."></textarea></label>
+            <label class="full">Recommendations<textarea id="completionRecommendations" maxlength="3000" placeholder="Suggested next actions (optional)"></textarea></label>
+          </div>
+          <div class="actions"><button id="completeInspection" type="submit" class="primary">Complete inspection</button><span id="completionMessage" class="form-status" role="status"></span></div>
+        </form>
         <h3 style="margin-top:30px">Inspection records</h3>
         <div class="defect-list" id="inspectionList"><p class="muted">Loading inspections…</p></div>
       </section>
@@ -166,9 +178,18 @@
     }
     async function loadInspections(){
       const list=$('inspectionList');list.textContent='Loading inspection records…';
-      const {data,error}=await client.from('inspections').select('inspection_number,traffic_signal_id,inspection_type,scheduled_date,inspection_status,inspection_date,equipment_condition,findings').order('scheduled_date',{ascending:false}).limit(60);
+      const {data,error}=await client.from('inspections').select('id,inspection_number,traffic_signal_id,inspection_type,scheduled_date,inspection_status,inspection_date,equipment_condition,findings').order('scheduled_date',{ascending:false}).limit(60);
       if(error){list.textContent='Could not retrieve inspections: '+error.message;return;}
       list.replaceChildren();
+      const select=$('completionInspection');const previous=select.value;
+      select.replaceChildren(new Option('Select a scheduled inspection',''));
+      for(const item of data||[]){
+        if(['Scheduled','In Progress'].includes(item.inspection_status)){
+          const signal=equipment.find(x=>x.id===item.traffic_signal_id)?.equipment_id||'Equipment';
+          select.add(new Option(signal+' · '+item.inspection_type+' · '+item.scheduled_date+' ('+item.inspection_number+')',item.id));
+        }
+      }
+      select.value=previous;
       if(!data?.length){list.textContent='No inspection records available.';return;}
       const today=manilaToday();
       for(const item of data){
@@ -193,6 +214,22 @@
       if(error){message.textContent='Unable to schedule: '+error.message;return;}
       message.textContent='Inspection scheduled successfully.';$('inspectionForm').reset();await Promise.all([loadInspections(),loadEquipment()]);
     });
+    $('completionForm').addEventListener('submit',async event=>{
+      event.preventDefault();const message=$('completionMessage'),button=$('completeInspection');
+      if(!['admin','engineer'].includes(currentRole)){message.textContent='Only administrators and engineers can complete inspections.';return;}
+      const p_inspection_id=$('completionInspection').value;
+      const p_condition=$('completionCondition').value;
+      const p_findings=$('completionFindings').value.trim();
+      const p_recommendations=$('completionRecommendations').value.trim();
+      if(!p_inspection_id||!['Good','Fair','Poor','Unknown'].includes(p_condition)||!p_findings){message.textContent='Select an inspection, condition, and findings.';return;}
+      if(!window.confirm('Confirm that this inspection has actually been performed and the findings are accurate?'))return;
+      button.disabled=true;message.textContent='Saving inspection findings…';
+      const {error}=await client.rpc('complete_sigma_inspection',{p_inspection_id,p_condition,p_findings,p_recommendations});
+      button.disabled=false;
+      if(error){message.textContent='Completion failed: '+error.message;return;}
+      message.textContent='Inspection completed and condition updated.';$('completionForm').reset();
+      $('detailsPanel').classList.add('hidden');await loadEquipment();await loadInspections();
+    });
     $('defectForm').addEventListener('submit',async event=>{
       event.preventDefault();
       const btn=$('submitDefect'), message=$('defectMessage');
@@ -212,7 +249,7 @@
       const {data:{user},error}=await client.auth.getUser();if(error||!user){showLogin();return;}
       const {data:profile,error:profileError}=await client.from('profiles').select('role').eq('id',user.id).single();
       if(profileError||!['admin','engineer','maintenance'].includes(profile?.role)){await client.auth.signOut();showLogin('Your account is pending approval or lacks a valid profile.');return;}
-      currentRole=profile.role;showApp();$('scheduleInspection').disabled=currentRole==='maintenance';$('inspectionDate').min=manilaToday();await loadEquipment();await Promise.all([loadDefects(),loadInspections()]);
+      currentRole=profile.role;showApp();$('scheduleInspection').disabled=currentRole==='maintenance';$('completeInspection').disabled=currentRole==='maintenance';$('inspectionDate').min=manilaToday();await loadEquipment();await Promise.all([loadDefects(),loadInspections()]);
     }
     $('loginForm').addEventListener('submit',async e=>{
       e.preventDefault();if(!client){$('loginMessage').textContent='Set your Supabase URL and publishable key in the HTML first.';return;}
