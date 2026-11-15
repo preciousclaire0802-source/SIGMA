@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SIGMA | Traffic Signal Maintenance</title>
+  <style>
+    :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;color:#eaf5f5;background:#071923}*{box-sizing:border-box}body{margin:0}button,input{font:inherit}button{cursor:pointer}button:disabled{opacity:.5;cursor:wait} .hidden{display:none!important}
+    .login-wrap{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 20% 15%,#144e54 0,transparent 35%),radial-gradient(circle at 90% 80%,#142f58 0,transparent 40%),#071923}
+    .login-card{width:min(440px,100%);padding:36px;border:1px solid #ffffff21;border-radius:26px;background:#0c2835e8;box-shadow:0 35px 90px #0006}.logo{display:flex;align-items:center;gap:13px;font-size:24px;font-weight:850;letter-spacing:.07em}.emblem{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;background:#0ce0b122;color:#4cf8d1;font-size:27px}.muted{color:#9db9c3}.login-card h1{font-size:29px;margin:35px 0 8px}.login-card p{line-height:1.6}.field{display:block;font-size:13px;color:#b9d0d5;margin:24px 0 7px}input{width:100%;background:#061c27;color:#fff;padding:14px;border:1px solid #35515d;border-radius:11px;outline:none}input:focus{border-color:#43dbbc}.primary{width:100%;padding:14px 18px;margin-top:25px;border:0;border-radius:11px;background:#45dfb7;color:#06262a;font-weight:800}.notice{font-size:13px;color:#ffd7a6;min-height:20px;margin-top:12px;line-height:1.5}
+    .app{min-height:100vh;display:grid;grid-template-columns:245px minmax(0,1fr)}aside{background:#091e2a;border-right:1px solid #29404a;padding:27px 17px;display:flex;flex-direction:column;gap:30px}aside .logo{padding:0 10px;font-size:20px}.nav{display:grid;gap:8px}.nav button{background:transparent;border:0;text-align:left;color:#a7c0cb;padding:14px 15px;border-radius:12px}.nav button.active{background:#123d44;color:#69f4d2;font-weight:700}.nav button:not(.active):hover{background:#12313b}.side-note{margin-top:auto;font-size:12px;color:#92acb8;line-height:1.6;padding:12px}
+    main{min-width:0;padding:36px;max-width:1600px;width:100%;margin:auto}.top{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:30px}.eyebrow{color:#49e4bf;font-weight:700;text-transform:uppercase;letter-spacing:.17em;font-size:11px}h1{margin:7px 0 8px;font-size:clamp(27px,3vw,39px)}.subtitle{color:#9db9c3;margin:0}.outline{background:#12313d;color:#e9fafa;border:1px solid #345863;border-radius:11px;padding:11px 15px}.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin-bottom:24px}.card,.panel{border:1px solid #294957;background:#0d2a37;border-radius:19px;padding:22px}.card span{color:#a4c0ca;font-size:13px}.card strong{display:block;margin-top:14px;font-size:35px}.card .green{color:#5bf3c9}.card .yellow{color:#ffd175}.card .red{color:#ff858c}.section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}h2{font-size:19px;margin:0}.panel{margin-bottom:22px}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;text-align:left;white-space:nowrap}th{font-size:11px;color:#92b1bd;text-transform:uppercase;letter-spacing:.08em;padding:15px 12px;border-bottom:1px solid #2b4b58}td{font-size:13px;padding:17px 12px;border-bottom:1px solid #203f4a}tr:last-child td{border-bottom:0}tbody tr{cursor:pointer}tbody tr:hover{background:#173e48}.badge{display:inline-block;border-radius:100px;padding:6px 10px;font-size:11px;font-weight:750;background:#315364;color:#d9f5f9}.badge.High{background:#5b2a37;color:#ffb6bb}.badge.Moderate{background:#554326;color:#ffe0a3}.badge.Low{background:#174e45;color:#85f4cf}.details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}.detail{background:#09232e;border-radius:12px;padding:13px}.detail small{display:block;color:#98b6c0;margin-bottom:6px}.detail b{font-size:14px}.empty{padding:26px;text-align:center;color:#a7c3ca}.alert{border:1px solid #765d3b;border-radius:12px;background:#3b30231a;padding:13px 16px;color:#f7d49b;font-size:13px;line-height:1.5;margin-bottom:20px}.foot{margin-top:20px;color:#8eabb8;font-size:12px}
+    @media(max-width:1050px){.cards{grid-template-columns:repeat(2,1fr)}.app{grid-template-columns:190px minmax(0,1fr)}main{padding:25px}}@media(max-width:700px){.app{display:block}aside{padding:16px;gap:13px}.nav{display:flex;overflow:auto}.nav button{white-space:nowrap}.side-note{display:none}main{padding:20px}.top{align-items:flex-start}.cards{grid-template-columns:repeat(2,1fr)}.card{padding:16px}.card strong{font-size:27px}.details{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <section id="loginScreen" class="login-wrap">
+    <form id="loginForm" class="login-card">
+      <div class="logo"><span class="emblem">🚦</span>SIGMA</div>
+      <h1>Welcome back.</h1>
+      <p class="muted">Sign in to the traffic signal maintenance monitoring system.</p>
+      <label class="field" for="email">Email address</label><input id="email" type="email" autocomplete="username" required placeholder="engineer@example.com" />
+      <label class="field" for="password">Password</label><input id="password" type="password" autocomplete="current-password" required placeholder="Enter your password" />
+      <button class="primary" id="loginButton" type="submit">Sign in to SIGMA</button>
+      <div id="loginMessage" class="notice" role="status"></div>
+      <p class="foot">Authorized users only · Demonstration data · No live traffic signal connection</p>
+    </form>
+  </section>
+
+  <div id="appScreen" class="app hidden">
+    <aside>
+      <div class="logo"><span class="emblem">🚦</span>SIGMA</div>
+      <nav class="nav" aria-label="Main navigation">
+        <button class="active" type="button">▦ &nbsp; Overview</button>
+        <button id="equipmentNav" type="button">◉ &nbsp; Equipment</button>
+      </nav>
+      <div class="side-note">Maintenance intelligence<br />Simulated records · No live telemetry</div>
+    </aside>
+    <main>
+      <header class="top">
+        <div><div class="eyebrow">Operations overview</div><h1>Traffic Signal Monitoring</h1><p class="subtitle">Equipment condition, reported issues, and inspection priorities.</p></div>
+        <button id="logoutButton" class="outline" type="button">Sign out</button>
+      </header>
+      <div class="alert">Demo environment: equipment statuses and conditions are simulated or manually reported. SIGMA does not detect physical faults or control traffic signals.</div>
+      <section class="cards" aria-label="Monitoring statistics">
+        <div class="card"><span>Total signals</span><strong id="totalCount">—</strong></div>
+        <div class="card"><span>High priority</span><strong class="red" id="highCount">—</strong></div>
+        <div class="card"><span>Moderate priority</span><strong class="yellow" id="moderateCount">—</strong></div>
+        <div class="card"><span>Low priority</span><strong class="green" id="lowCount">—</strong></div>
+      </section>
+      <section class="panel" id="equipmentPanel">
+        <div class="section-head"><h2>Registered Equipment</h2><button class="outline" id="refreshButton" type="button">↻ Refresh</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Equipment ID</th><th>Intersection</th><th>Operating status</th><th>Condition</th><th>Unresolved defects</th><th>Overdue inspections</th><th>Priority</th></tr></thead><tbody id="equipmentRows"><tr><td colspan="7" class="empty">Loading equipment…</td></tr></tbody></table></div>
+      </section>
+      <section class="panel hidden" id="detailsPanel"><div class="section-head"><h2 id="detailsHeading">Equipment details</h2><button class="outline" type="button" id="closeDetails">Close</button></div><div class="details" id="detailsGrid"></div><h3 style="font-size:15px;margin-top:23px">Priority reasons</h3><p class="muted" id="priorityReasons"></p></section>
+      <p id="appMessage" class="foot" role="status"></p>
+    </main>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    // STEP 4B: Replace these two values with your project's public settings.
+    // Never paste a Supabase secret/service_role key here.
+    const SUPABASE_URL = 'PASTE_SUPABASE_PROJECT_URL_HERE';
+    const SUPABASE_PUBLISHABLE_KEY = 'PASTE_SUPABASE_PUBLISHABLE_KEY_HERE';
+
+    const $ = (id) => document.getElementById(id);
+    const configured = SUPABASE_URL.startsWith('https://') && !SUPABASE_PUBLISHABLE_KEY.startsWith('PASTE_');
+    const client = configured ? createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY) : null;
+    let equipment = [];
+
+    function showLogin(message = '') {
+      $('appScreen').classList.add('hidden');$('loginScreen').classList.remove('hidden');$('loginMessage').textContent = message;
+    }
+    function showApp(){ $('loginScreen').classList.add('hidden');$('appScreen').classList.remove('hidden'); }
+    function addCell(row, value, badge = false) {
+      const td = document.createElement('td');
+      if(badge){const span=document.createElement('span');span.className='badge '+value;span.textContent=value;td.appendChild(span);}
+      else td.textContent = String(value ?? '—');
+      row.appendChild(td);
+    }
+    function showDetails(item){
+      $('detailsHeading').textContent=item.equipment_id+' · '+(item.intersection_name||item.location_name);
+      const fields=[['Operating status',item.operating_status],['Recorded condition',item.equipment_condition],['Maintenance priority',item.maintenance_priority],['Location',item.location_name],['Unresolved defects',item.unresolved_defects],['Critical defects',item.critical_defects],['Major defects',item.major_defects],['Overdue inspections',item.overdue_inspections]];
+      $('detailsGrid').replaceChildren();
+      for(const [label,value] of fields){const box=document.createElement('div');box.className='detail';const small=document.createElement('small');small.textContent=label;const bold=document.createElement('b');bold.textContent=String(value??'—');box.append(small,bold);$('detailsGrid').appendChild(box);}
+      $('priorityReasons').textContent=(item.priority_reasons||[]).join(' · ')||'No current rule-based concerns recorded.';
+      $('detailsPanel').classList.remove('hidden');$('detailsPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+    async function loadEquipment(){
+      $('appMessage').textContent='Loading latest records…';
+      const {data,error}=await client.from('equipment_priority_view').select('*').order('equipment_id');
+      if(error){$('appMessage').textContent='Could not load equipment: '+error.message;return;}
+      equipment=data||[];
+      $('totalCount').textContent=equipment.length;
+      for(const level of ['High','Moderate','Low']) $(''+level.toLowerCase()+'Count').textContent=equipment.filter(e=>e.maintenance_priority===level).length;
+      const tbody=$('equipmentRows');tbody.replaceChildren();
+      for(const item of equipment){const tr=document.createElement('tr');tr.tabIndex=0;for(const value of [item.equipment_id,item.intersection_name||item.location_name,item.operating_status,item.equipment_condition,item.unresolved_defects,item.overdue_inspections])addCell(tr,value);addCell(tr,item.maintenance_priority,true);tr.addEventListener('click',()=>showDetails(item));tr.addEventListener('keydown',e=>{if(e.key==='Enter')showDetails(item);});tbody.appendChild(tr);}
+      if(!equipment.length){const tr=document.createElement('tr');const td=document.createElement('td');td.colSpan=7;td.className='empty';td.textContent='No equipment visible. Check that your account is approved and your records exist.';tr.appendChild(td);tbody.appendChild(tr);}
+      $('appMessage').textContent='Showing '+equipment.length+' records from Supabase. Refreshed '+new Date().toLocaleTimeString()+'.';
+    }
+    async function enterApp(){
+      const {data:{user},error}=await client.auth.getUser();if(error||!user){showLogin();return;}
+      const {data:profile,error:profileError}=await client.from('profiles').select('role').eq('id',user.id).single();
+      if(profileError||!['admin','engineer','maintenance'].includes(profile?.role)){await client.auth.signOut();showLogin('Your account is pending approval or lacks a valid profile.');return;}
+      showApp();await loadEquipment();
+    }
+    $('loginForm').addEventListener('submit',async e=>{
+      e.preventDefault();if(!client){$('loginMessage').textContent='Set your Supabase URL and publishable key in the HTML first.';return;}
+      $('loginButton').disabled=true;$('loginMessage').textContent='Signing in…';
+      const {error}=await client.auth.signInWithPassword({email:$('email').value,password:$('password').value});
+      $('loginButton').disabled=false;
+      if(error){$('loginMessage').textContent=error.message;return;}
+      $('password').value='';await enterApp();
+    });
+    $('logoutButton').addEventListener('click',async()=>{await client.auth.signOut();showLogin('You have signed out.');});
+    $('refreshButton').addEventListener('click',loadEquipment);
+    $('equipmentNav').addEventListener('click',()=>$('equipmentPanel').scrollIntoView({behavior:'smooth'}));
+    $('closeDetails').addEventListener('click',()=>$('detailsPanel').classList.add('hidden'));
+    if(!configured)showLogin('Setup required: add your Supabase project URL and publishable key.');
+    else enterApp().catch(err=>showLogin('Unable to connect: '+err.message));
+  </script>
+</body>
+</html>
