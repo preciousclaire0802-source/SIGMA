@@ -36,6 +36,7 @@
         <button id="equipmentNav" type="button">◉ &nbsp; Equipment</button>
         <button id="defectsNav" type="button">⚑ &nbsp; Defect reports</button>
         <button id="inspectionsNav" type="button">▤ &nbsp; Inspections</button>
+        <button id="maintenanceNav" type="button">⚒ &nbsp; Maintenance</button>
       </nav>
       <div class="side-note">Maintenance intelligence<br />Simulated records · No live telemetry</div>
     </aside>
@@ -98,6 +99,23 @@
         <h3 style="margin-top:30px">Inspection records</h3>
         <div class="defect-list" id="inspectionList"><p class="muted">Loading inspections…</p></div>
       </section>
+      <section class="panel" id="maintenancePanel">
+        <div class="section-head"><h2>Maintenance tasks</h2><button id="refreshMaintenance" type="button" class="outline">↻ Refresh tasks</button></div>
+        <p class="muted">Create a maintenance task based on equipment records. New tasks start as Pending. Repair and verification actions will be added in the next phase.</p>
+        <form id="maintenanceForm">
+          <div class="form-grid">
+            <label>Traffic signal<select id="maintenanceSignal" required><option value="">Select equipment</option></select></label>
+            <label>Maintenance type<select id="maintenanceType" required><option>Corrective</option><option>Preventive</option><option>Routine</option><option>Emergency</option></select></label>
+            <label>Task priority<select id="maintenancePriority" required><option>Moderate</option><option>Low</option><option>High</option></select></label>
+            <label>Scheduled date<input id="maintenanceDate" type="date" required /></label>
+            <label class="full">Maintenance title<input id="maintenanceTitle" maxlength="160" required placeholder="e.g. Inspect and replace worn terminal connection" /></label>
+            <label class="full">Maintenance description<textarea id="maintenanceDescription" maxlength="2500" placeholder="Document the proposed work and its basis in reported equipment concerns."></textarea></label>
+          </div>
+          <div class="actions"><button class="primary" type="submit" id="createMaintenance">Create maintenance task</button><span class="form-status" id="maintenanceMessage" role="status"></span></div>
+        </form>
+        <h3 style="margin-top:30px">Maintenance task register</h3>
+        <div id="maintenanceList" class="defect-list"><p class="muted">Loading maintenance tasks…</p></div>
+      </section>
       <p id="appMessage" class="foot" role="status"></p>
     </main>
   </div>
@@ -134,6 +152,7 @@
       $('priorityReasons').textContent=(item.priority_reasons||[]).join(' · ')||'No current rule-based concerns recorded.';
       $('defectSignal').value=item.id;
       $('inspectionSignal').value=item.id;
+      $('maintenanceSignal').value=item.id;
       $('detailsPanel').classList.remove('hidden');$('detailsPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
     }
     async function loadEquipment(){
@@ -143,12 +162,16 @@
       equipment=data||[];
       const previouslySelected=$('defectSignal').value;
       const inspectionSelected=$('inspectionSignal').value;
+      const maintenanceSelected=$('maintenanceSignal').value;
       $('defectSignal').replaceChildren(new Option('Select equipment',''));
       $('inspectionSignal').replaceChildren(new Option('Select equipment',''));
+      $('maintenanceSignal').replaceChildren(new Option('Select equipment',''));
       for(const item of equipment)$('defectSignal').add(new Option(item.equipment_id+' — '+(item.intersection_name||item.location_name),item.id));
       for(const item of equipment)$('inspectionSignal').add(new Option(item.equipment_id+' — '+(item.intersection_name||item.location_name),item.id));
+      for(const item of equipment)$('maintenanceSignal').add(new Option(item.equipment_id+' — '+(item.intersection_name||item.location_name),item.id));
       $('defectSignal').value=previouslySelected;
       $('inspectionSignal').value=inspectionSelected;
+      $('maintenanceSignal').value=maintenanceSelected;
       $('totalCount').textContent=equipment.length;
       for(const level of ['High','Moderate','Low']) $(''+level.toLowerCase()+'Count').textContent=equipment.filter(e=>e.maintenance_priority===level).length;
       const tbody=$('equipmentRows');tbody.replaceChildren();
@@ -230,6 +253,34 @@
       message.textContent='Inspection completed and condition updated.';$('completionForm').reset();
       $('detailsPanel').classList.add('hidden');await loadEquipment();await loadInspections();
     });
+    async function loadMaintenance(){
+      const list=$('maintenanceList');list.textContent='Loading maintenance tasks…';
+      const {data,error}=await client.from('maintenance_records').select('maintenance_number,traffic_signal_id,maintenance_type,maintenance_title,maintenance_description,priority,scheduled_date,maintenance_status,verification_status').order('created_at',{ascending:false}).limit(60);
+      if(error){list.textContent='Could not retrieve tasks: '+error.message;return;}
+      list.replaceChildren();if(!data?.length){list.textContent='No maintenance tasks recorded yet.';return;}
+      for(const item of data){
+        const box=document.createElement('article');box.className='defect-item';
+        const title=document.createElement('strong');title.textContent=(equipment.find(x=>x.id===item.traffic_signal_id)?.equipment_id||'Equipment')+' · '+item.maintenance_title;
+        const meta=document.createElement('div');meta.className='defect-meta';
+        for(const value of [item.maintenance_number,item.maintenance_type,item.priority+' task priority',item.maintenance_status,item.scheduled_date||'Unscheduled',item.verification_status]){const span=document.createElement('span');span.textContent=value;meta.append(span);}
+        const description=document.createElement('p');description.textContent=item.maintenance_description||'No task description provided.';
+        box.append(title,meta,description);list.append(box);
+      }
+    }
+    $('maintenanceForm').addEventListener('submit',async event=>{
+      event.preventDefault();const message=$('maintenanceMessage'),button=$('createMaintenance');
+      if(!['admin','engineer'].includes(currentRole)){message.textContent='Only administrators and engineers may create maintenance tasks.';return;}
+      const traffic_signal_id=$('maintenanceSignal').value,scheduled_date=$('maintenanceDate').value;
+      const maintenance_title=$('maintenanceTitle').value.trim();
+      if(!equipment.some(item=>item.id===traffic_signal_id)||!maintenance_title){message.textContent='Select equipment and enter a task title.';return;}
+      if(!scheduled_date||scheduled_date<manilaToday()){message.textContent='Choose today or a future date.';return;}
+      const payload={traffic_signal_id,maintenance_type:$('maintenanceType').value,priority:$('maintenancePriority').value,scheduled_date,maintenance_title,maintenance_description:$('maintenanceDescription').value.trim()||null,maintenance_status:'Pending'};
+      button.disabled=true;message.textContent='Saving maintenance task…';
+      const {error}=await client.from('maintenance_records').insert(payload);
+      button.disabled=false;
+      if(error){message.textContent='Task was not saved: '+error.message;return;}
+      message.textContent='Maintenance task created successfully.';$('maintenanceForm').reset();await loadMaintenance();
+    });
     $('defectForm').addEventListener('submit',async event=>{
       event.preventDefault();
       const btn=$('submitDefect'), message=$('defectMessage');
@@ -249,7 +300,7 @@
       const {data:{user},error}=await client.auth.getUser();if(error||!user){showLogin();return;}
       const {data:profile,error:profileError}=await client.from('profiles').select('role').eq('id',user.id).single();
       if(profileError||!['admin','engineer','maintenance'].includes(profile?.role)){await client.auth.signOut();showLogin('Your account is pending approval or lacks a valid profile.');return;}
-      currentRole=profile.role;showApp();$('scheduleInspection').disabled=currentRole==='maintenance';$('completeInspection').disabled=currentRole==='maintenance';$('inspectionDate').min=manilaToday();await loadEquipment();await Promise.all([loadDefects(),loadInspections()]);
+      currentRole=profile.role;showApp();$('scheduleInspection').disabled=currentRole==='maintenance';$('completeInspection').disabled=currentRole==='maintenance';$('createMaintenance').disabled=currentRole==='maintenance';$('inspectionDate').min=manilaToday();$('maintenanceDate').min=manilaToday();await loadEquipment();await Promise.all([loadDefects(),loadInspections(),loadMaintenance()]);
     }
     $('loginForm').addEventListener('submit',async e=>{
       e.preventDefault();if(!client){$('loginMessage').textContent='Set your Supabase URL and publishable key in the HTML first.';return;}
@@ -264,6 +315,8 @@
     $('equipmentNav').addEventListener('click',()=>$('equipmentPanel').scrollIntoView({behavior:'smooth'}));
     $('defectsNav').addEventListener('click',()=>$('defectsPanel').scrollIntoView({behavior:'smooth'}));
     $('inspectionsNav').addEventListener('click',()=>$('inspectionsPanel').scrollIntoView({behavior:'smooth'}));
+    $('maintenanceNav').addEventListener('click',()=>$('maintenancePanel').scrollIntoView({behavior:'smooth'}));
+    $('refreshMaintenance').addEventListener('click',loadMaintenance);
     $('refreshInspections').addEventListener('click',loadInspections);
     $('reloadDefects').addEventListener('click',loadDefects);
     $('closeDetails').addEventListener('click',()=>$('detailsPanel').classList.add('hidden'));
