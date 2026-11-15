@@ -94,6 +94,34 @@
     @media(max-width:1250px){.workspace-columns,.overview-grid{grid-template-columns:1fr}.list-scroll{max-height:none}.app{grid-template-columns:215px minmax(0,1fr)}}
     @media(max-width:700px){.app{display:block;height:auto;min-height:100vh;overflow:visible}aside{gap:14px;padding:14px}main{height:auto;min-height:calc(100vh - 130px);overflow:visible;padding:22px 16px}.nav{display:flex;overflow-x:auto}.nav button{white-space:nowrap}.top{align-items:flex-start}.workspace-columns .form-grid{grid-template-columns:1fr}.workspace-view .report-grid{grid-template-columns:1fr}.overview-grid .cards{grid-template-columns:repeat(2,minmax(0,1fr))}.workspace-box{padding:17px}}
   </style>
+  <style>
+    /* Screen-sized pages, compact cards, and paging controls. */
+    #appScreen .workspace-columns .workspace-box{display:flex;flex-direction:column;overflow:hidden;padding:15px;gap:8px}
+    #appScreen .workspace-box h3{font-size:15px;margin:2px 0 8px}
+    #appScreen .workspace-box .defect-list{min-height:0;flex:1 1 auto;overflow:hidden;display:block}
+    #appScreen .workspace-box .defect-item{padding:12px;max-height:100%;overflow:hidden;font-size:12px}
+    #appScreen .workspace-box .defect-item p{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;margin:5px 0;font-size:12px}
+    #appScreen .workspace-box .defect-meta{margin:5px 0;gap:6px;font-size:11px}
+    #appScreen .workspace-box .actions{margin-top:7px}
+    #appScreen .workspace-box .actions button{padding:8px 10px;font-size:12px}
+    .pager{display:flex;align-items:center;justify-content:center;gap:12px;padding:6px 0 0;flex:0 0 auto;color:#d4c4a6;font-size:12px}
+    .pager button{font-size:12px;padding:7px 12px}
+    #equipmentPanel .pager{padding-top:12px}
+    #reportsPanel{display:flex;flex-direction:column;gap:6px;overflow:hidden!important}
+    #reportCharts{min-height:0;flex:1 1 auto;overflow:hidden;gap:12px}
+    #reportCharts .report-block{min-height:0;overflow:hidden;padding:13px}
+    #reportCharts .report-block h3{font-size:14px;margin-bottom:8px}
+    #reportCharts .bar-line{margin:5px 0}
+    #reportCharts .bar-top{font-size:11px;margin-bottom:4px}
+    #reportCharts .bar-bg{height:7px}
+    #reportsPanel .downloads{margin:2px 0;gap:8px}
+    #reportsPanel .downloads button{padding:8px 11px;font-size:12px}
+    #reportsPanel>h3,#reportsPanel>p{margin:0!important}
+    .sigma-modal{max-height:95dvh}.modal-body{max-height:calc(95dvh - 63px);padding:13px 20px}
+    .modal-body .form-grid{gap:9px}.modal-body .form-grid input,.modal-body .form-grid select,.modal-body .form-grid textarea{padding:9px;margin-top:4px}
+    .modal-body .form-grid textarea{min-height:62px}.modal-head{padding:10px 19px}.modal-body .actions{margin-top:9px}
+    @media(max-height:700px){#appScreen main>.alert{font-size:11px}#appScreen .panel>.section-head{margin-bottom:6px}#appScreen .panel>.muted{display:none}#appScreen .workspace-view{padding:13px 16px}#appScreen .workspace-box{padding:12px}#appScreen .top h1{font-size:26px}}
+  </style>
 </head>
 <body>
   <section id="loginScreen" class="login-wrap">
@@ -183,7 +211,7 @@
       </section>
       <section class="panel" id="maintenancePanel">
         <div class="section-head"><h2>Maintenance tasks</h2><button id="refreshMaintenance" type="button" class="outline">↻ Refresh tasks</button></div>
-        <p class="muted">Create a maintenance task based on equipment records. New tasks start as Pending. Repair and verification actions will be added in the next phase.</p>
+        <p class="muted">Create, track, and verify maintenance tasks based on recorded equipment concerns.</p>
         <form id="maintenanceForm">
           <div class="form-grid">
             <label>Traffic signal<select id="maintenanceSignal" required><option value="">Select equipment</option></select></label>
@@ -204,7 +232,7 @@
         <p class="muted">Database-based summaries of simulated and manually recorded information. Figures reflect the latest data retrieved from Supabase, not live traffic signal telemetry.</p>
         <div class="report-grid" id="reportCharts"><p class="muted">Loading reports…</p></div>
         <h3 style="margin-top:28px">Export records</h3>
-        <p class="muted">Download CSV files for spreadsheet review. Exports include all accessible records up to 1,000 rows per category.</p>
+        <p class="muted">Download up to 1,000 accessible records per CSV category.</p>
         <div class="downloads">
           <button class="outline" data-export="equipment" type="button">↓ Equipment CSV</button>
           <button class="outline" data-export="defects" type="button">↓ Defects CSV</button>
@@ -297,6 +325,27 @@
       configure('inspectionsPanel',[['inspectionForm','Schedule inspection'],['completionForm','Complete inspection']],'Schedule upcoming assessments or document a completed site inspection.');
       configure('maintenancePanel',[['maintenanceForm','Create maintenance task']],'Register new maintenance work. Start, complete, and verify existing tasks in the register.');
     }
+    function openNoteDialog(title,description,onSubmit){
+      const dialog=$('actionDialog'),body=$('actionDialogBody');
+      $('actionDialogTitle').textContent=title;body.replaceChildren();
+      const caption=document.createElement('p');caption.className='muted';caption.textContent=description;
+      const textarea=document.createElement('textarea');textarea.maxLength=3000;textarea.required=true;textarea.rows=4;textarea.style.cssText='width:100%;padding:12px;background:#0c1420;color:#fff;border:1px solid #77664c;border-radius:10px;resize:none';
+      const actions=document.createElement('div');actions.className='actions';
+      const submit=document.createElement('button');submit.type='button';submit.className='primary';submit.textContent='Save action';
+      submit.addEventListener('click',()=>{const notes=textarea.value.trim();if(!notes){textarea.focus();return;}dialog.close();onSubmit(notes);});
+      actions.append(submit);body.append(caption,textarea,actions);dialog.showModal();textarea.focus();
+    }
+    function openRecordDetails(title,text){
+      const dialog=$('actionDialog'),body=$('actionDialogBody');
+      $('actionDialogTitle').textContent=title;body.replaceChildren();
+      const content=document.createElement('p');content.className='muted';content.style.cssText='white-space:pre-wrap;line-height:1.65';content.textContent=text||'No additional details recorded.';
+      body.append(content);dialog.showModal();
+    }
+    function makeDetailsTitle(node,label,details){
+      node.title='Click to view full record';node.tabIndex=0;node.style.cursor='pointer';
+      node.addEventListener('click',()=>openRecordDetails(label,details));
+      node.addEventListener('keydown',event=>{if(event.key==='Enter')openRecordDetails(label,details);});
+    }
     function switchView(id){
       for(const view of Object.keys(viewTitles))$(view).classList.toggle('hidden',view!==id);
       const navMap={overviewPanel:'overviewNav',equipmentPanel:'equipmentNav',defectsPanel:'defectsNav',inspectionsPanel:'inspectionsNav',maintenancePanel:'maintenanceNav',reportsPanel:'reportsNav'};
@@ -311,6 +360,23 @@
       const root=$('overviewSummary');root.replaceChildren();
       const categories=[['Operational',equipment.filter(x=>x.operating_status==='Operational').length],['Reported malfunctions',equipment.filter(x=>x.operating_status==='Malfunctioning').length],['Unresolved defects',equipment.reduce((sum,x)=>sum+Number(x.unresolved_defects||0),0)],['Overdue inspections',equipment.reduce((sum,x)=>sum+Number(x.overdue_inspections||0),0)]];
       for(const [label,value] of categories){const row=document.createElement('div');row.className='summary-row';const name=document.createElement('span');name.textContent=label;const count=document.createElement('strong');count.textContent=value;row.append(name,count);root.append(row);}
+    }
+    function paginate(container,items,pageSize,key){
+      const parent=container.parentElement;
+      parent.querySelectorAll('[data-pager-key="'+key+'"]').forEach(node=>node.remove());
+      if(items.length<=pageSize){items.forEach(node=>node.classList.remove('hidden'));return;}
+      let page=0;
+      const pager=document.createElement('div');pager.className='pager';pager.dataset.pagerKey=key;
+      const prev=document.createElement('button');prev.type='button';prev.className='outline';prev.textContent='← Previous';
+      const info=document.createElement('span');
+      const next=document.createElement('button');next.type='button';next.className='outline';next.textContent='Next →';
+      const pages=Math.ceil(items.length/pageSize);
+      const render=()=>{
+        items.forEach((node,index)=>node.classList.toggle('hidden',Math.floor(index/pageSize)!==page));
+        info.textContent=(page+1)+' / '+pages;prev.disabled=page===0;next.disabled=page>=pages-1;
+      };
+      prev.addEventListener('click',()=>{page--;render();});next.addEventListener('click',()=>{page++;render();});
+      pager.append(prev,info,next);container.insertAdjacentElement('afterend',pager);render();
     }
 
     function showLogin(message = '') {
@@ -359,6 +425,7 @@
       for(const level of ['High','Moderate','Low']) $(''+level.toLowerCase()+'Count').textContent=equipment.filter(e=>e.maintenance_priority===level).length;
       const tbody=$('equipmentRows');tbody.replaceChildren();
       for(const item of equipment){const tr=document.createElement('tr');tr.tabIndex=0;for(const value of [item.equipment_id,item.intersection_name||item.location_name,item.operating_status,item.equipment_condition,item.unresolved_defects,item.overdue_inspections])addCell(tr,value);addCell(tr,item.maintenance_priority,true);tr.addEventListener('click',()=>showDetails(item));tr.addEventListener('keydown',e=>{if(e.key==='Enter')showDetails(item);});tbody.appendChild(tr);}
+      paginate($('equipmentPanel').querySelector('.table-wrap'),[...tbody.querySelectorAll('tr')],4,'equipment');
       if(!equipment.length){const tr=document.createElement('tr');const td=document.createElement('td');td.colSpan=7;td.className='empty';td.textContent='No equipment visible. Check that your account is approved and your records exist.';tr.appendChild(td);tbody.appendChild(tr);}
       $('appMessage').textContent='Showing '+equipment.length+' records from Supabase. Refreshed '+new Date().toLocaleTimeString()+'.';
     }
@@ -374,6 +441,7 @@
       for(const item of data){
         const box=document.createElement('article');box.className='defect-item';
         const title=document.createElement('strong');title.textContent=(equipment.find(x=>x.id===item.traffic_signal_id)?.equipment_id||'Equipment')+' · '+item.defect_title;
+        makeDetailsTitle(title,title.textContent,item.defect_description+'\n\nStatus: '+item.status+'\nResolution: '+(item.resolution_notes||'Not resolved'));
         const meta=document.createElement('div');meta.className='defect-meta';
         for(const value of [item.defect_number,item.defect_category,item.severity,item.status,new Date(item.reported_at).toLocaleDateString()]){const span=document.createElement('span');span.textContent=String(value);meta.append(span);}
         const description=document.createElement('p');description.textContent=item.defect_description;
@@ -381,15 +449,15 @@
         if(item.resolution_notes){const closed=document.createElement('p');closed.textContent='Resolution: '+item.resolution_notes;box.append(closed);}
         if(['Open','In Progress'].includes(item.status)&&['admin','engineer'].includes(currentRole)){
           if(eligible.has(item.id)){
-            const textarea=document.createElement('textarea');textarea.placeholder='Required: summarize the verified resolution and supporting evidence';textarea.maxLength=3000;textarea.style.cssText='width:100%;min-height:78px;margin-top:12px;padding:12px;background:#061c27;color:#fff;border:1px solid #35515d;border-radius:10px';box.append(textarea);
             const actions=document.createElement('div');actions.className='actions';
-            const button=document.createElement('button');button.type='button';button.className='outline';button.textContent='Close defect';button.addEventListener('click',()=>closeDefect(item,textarea.value,button));actions.append(button);box.append(actions);
+            const button=document.createElement('button');button.type='button';button.className='outline';button.textContent='Close defect';button.addEventListener('click',()=>openNoteDialog('Close '+item.defect_number,'Summarize the verified repair and the evidence for closure.',(notes)=>closeDefect(item,notes,button)));actions.append(button);box.append(actions);
           }else{
             const help=document.createElement('p');help.textContent='Closure unavailable: requires completed, verified maintenance linked to this defect.';box.append(help);
           }
         }
         list.append(box);
       }
+      paginate(list,[...list.querySelectorAll('.defect-item')],1,'defects');
     }
     async function closeDefect(defect,rawNotes,button){
       const notes=rawNotes.trim();if(!notes){window.alert('Enter the resolution notes before closing the defect.');return;}
@@ -436,12 +504,14 @@
       for(const item of data){
         const box=document.createElement('article');box.className='defect-item';
         const title=document.createElement('strong');title.textContent=(equipment.find(x=>x.id===item.traffic_signal_id)?.equipment_id||'Equipment')+' · '+item.inspection_type+' inspection';
+        makeDetailsTitle(title,title.textContent,item.findings||'No findings recorded yet.');
         const meta=document.createElement('div');meta.className='defect-meta';
         const overdue=['Scheduled','In Progress'].includes(item.inspection_status)&&item.scheduled_date<today;
         for(const value of [item.inspection_number,'Scheduled: '+item.scheduled_date,overdue?'Overdue':item.inspection_status,item.equipment_condition||'Condition not assessed']){const span=document.createElement('span');span.textContent=value;meta.append(span);}
         const note=document.createElement('p');note.textContent=item.findings||'No inspection findings recorded yet.';
         box.append(title,meta,note);list.append(box);
       }
+      paginate(list,[...list.querySelectorAll('.defect-item')],1,'inspections');
     }
     $('inspectionForm').addEventListener('submit',async event=>{
       event.preventDefault();const message=$('inspectionMessage'),button=$('scheduleInspection');
@@ -479,6 +549,7 @@
       for(const item of data){
         const box=document.createElement('article');box.className='defect-item';
         const title=document.createElement('strong');title.textContent=(equipment.find(x=>x.id===item.traffic_signal_id)?.equipment_id||'Equipment')+' · '+item.maintenance_title;
+        makeDetailsTitle(title,title.textContent,['Description: '+(item.maintenance_description||'None'),'Repair actions: '+(item.actions_taken||'None'),'Verification: '+(item.verification_notes||'None')].join('\n\n'));
         const meta=document.createElement('div');meta.className='defect-meta';
         const linkedDefect=unresolvedDefects.find(d=>d.id===item.defect_id);
         for(const value of [item.maintenance_number,item.maintenance_type,item.priority+' task priority',item.maintenance_status,item.scheduled_date||'Unscheduled',item.verification_status,item.defect_id?(linkedDefect?.defect_number||'Linked defect'):'No linked defect']){const span=document.createElement('span');span.textContent=value;meta.append(span);}
@@ -491,23 +562,22 @@
         if((item.maintenance_status==='Pending'||item.maintenance_status==='In Progress')&&canProgress){
           const actions=document.createElement('div');actions.className='actions';
           if(item.maintenance_status==='In Progress'){
-            const textarea=document.createElement('textarea');textarea.placeholder='Record repair actions performed (required)';textarea.maxLength=3000;textarea.style.cssText='width:100%;min-height:76px;margin-top:12px;padding:12px;background:#061c27;color:#fff;border:1px solid #35515d;border-radius:10px';box.append(textarea);
-            const button=document.createElement('button');button.type='button';button.className='outline';button.textContent='Complete maintenance';button.addEventListener('click',()=>maintenanceAction(item,'complete',textarea.value,button,box));actions.append(button);
+            const button=document.createElement('button');button.type='button';button.className='outline';button.textContent='Complete maintenance';button.addEventListener('click',()=>openNoteDialog('Complete maintenance','Describe repair work performed.',notes=>maintenanceAction(item,'complete',notes,button,box)));actions.append(button);
           }else{
             const button=document.createElement('button');button.type='button';button.className='outline';button.textContent='Start maintenance';button.addEventListener('click',()=>maintenanceAction(item,'start','',button,box));actions.append(button);
           }
           box.append(actions);
         }
         if(item.maintenance_status==='Completed'&&item.verification_status==='Not Verified'&&canVerify){
-          const textarea=document.createElement('textarea');textarea.placeholder='Verification findings (required for either result)';textarea.maxLength=3000;textarea.style.cssText='width:100%;min-height:76px;margin-top:12px;padding:12px;background:#061c27;color:#fff;border:1px solid #35515d;border-radius:10px';box.append(textarea);
           const actions=document.createElement('div');actions.className='actions';
           for(const [label,passed] of [['Verify repair',true],['Return for rework',false]]){
-            const button=document.createElement('button');button.type='button';button.className='outline';button.textContent=label;button.addEventListener('click',()=>verifyMaintenance(item,passed,textarea.value,button,box));actions.append(button);
+            const button=document.createElement('button');button.type='button';button.className='outline';button.textContent=label;button.addEventListener('click',()=>openNoteDialog(label,'Record verification findings and supporting evidence.',notes=>verifyMaintenance(item,passed,notes,button,box)));actions.append(button);
           }
           box.append(actions);
         }
         list.append(box);
       }
+      paginate(list,[...list.querySelectorAll('.defect-item')],1,'maintenance');
     }
     function drawBars(title,entries){
       const wrap=document.createElement('div');wrap.className='report-block';
@@ -542,7 +612,7 @@
         drawBars('Inspection status',[['Completed',reportData.inspections.filter(x=>x.inspection_status==='Completed').length,''],['Upcoming',reportData.inspections.filter(x=>['Scheduled','In Progress'].includes(x.inspection_status)&&x.scheduled_date>=today).length,'warn'],['Overdue',reportData.inspections.filter(x=>['Scheduled','In Progress'].includes(x.inspection_status)&&x.scheduled_date<today).length,'danger'],['Cancelled',reportData.inspections.filter(x=>x.inspection_status==='Cancelled').length,'danger']]),
         drawBars('Open defect severity',[['Critical',reportData.defects.filter(x=>['Open','In Progress'].includes(x.status)&&x.severity==='Critical').length,'danger'],['Major',reportData.defects.filter(x=>['Open','In Progress'].includes(x.status)&&x.severity==='Major').length,'danger'],['Moderate',reportData.defects.filter(x=>['Open','In Progress'].includes(x.status)&&x.severity==='Moderate').length,'warn'],['Minor',reportData.defects.filter(x=>['Open','In Progress'].includes(x.status)&&x.severity==='Minor').length,'']])
       ];
-      chart.replaceChildren(...charts);message.textContent='Reports refreshed '+new Date().toLocaleString()+'.';
+      chart.replaceChildren(...charts);paginate(chart,charts,2,'reports');message.textContent='Reports refreshed '+new Date().toLocaleString()+'.';
     }
     function downloadCsv(category){
       const rows=reportData[category];if(!rows){$('reportMessage').textContent='Refresh analytics first.';return;}
