@@ -185,8 +185,11 @@
     }
     async function loadDefects(){
       const list=$('defectList');list.textContent='Loading reports…';
-      const {data,error}=await client.from('defect_reports').select('defect_number,traffic_signal_id,defect_title,defect_description,defect_category,severity,status,reported_at').order('reported_at',{ascending:false}).limit(40);
+      const {data,error}=await client.from('defect_reports').select('id,defect_number,traffic_signal_id,defect_title,defect_description,defect_category,severity,status,reported_at,resolution_notes').order('reported_at',{ascending:false}).limit(40);
       if(error){list.textContent='Unable to retrieve defect history: '+error.message;return;}
+      const {data:verified,error:verifiedError}=await client.from('maintenance_records').select('defect_id').eq('maintenance_status','Completed').eq('verification_status','Verified').not('defect_id','is',null);
+      if(verifiedError){list.textContent='Unable to check maintenance verification: '+verifiedError.message;return;}
+      const eligible=new Set((verified||[]).map(record=>record.defect_id));
       list.replaceChildren();
       if(!data?.length){list.textContent='No defect reports recorded.';return;}
       for(const item of data){
@@ -195,8 +198,27 @@
         const meta=document.createElement('div');meta.className='defect-meta';
         for(const value of [item.defect_number,item.defect_category,item.severity,item.status,new Date(item.reported_at).toLocaleDateString()]){const span=document.createElement('span');span.textContent=String(value);meta.append(span);}
         const description=document.createElement('p');description.textContent=item.defect_description;
-        box.append(title,meta,description);list.append(box);
+        box.append(title,meta,description);
+        if(item.resolution_notes){const closed=document.createElement('p');closed.textContent='Resolution: '+item.resolution_notes;box.append(closed);}
+        if(['Open','In Progress'].includes(item.status)&&['admin','engineer'].includes(currentRole)){
+          if(eligible.has(item.id)){
+            const textarea=document.createElement('textarea');textarea.placeholder='Required: summarize the verified resolution and supporting evidence';textarea.maxLength=3000;textarea.style.cssText='width:100%;min-height:78px;margin-top:12px;padding:12px;background:#061c27;color:#fff;border:1px solid #35515d;border-radius:10px';box.append(textarea);
+            const actions=document.createElement('div');actions.className='actions';
+            const button=document.createElement('button');button.type='button';button.className='outline';button.textContent='Close defect';button.addEventListener('click',()=>closeDefect(item,textarea.value,button));actions.append(button);box.append(actions);
+          }else{
+            const help=document.createElement('p');help.textContent='Closure unavailable: requires completed, verified maintenance linked to this defect.';box.append(help);
+          }
+        }
+        list.append(box);
       }
+    }
+    async function closeDefect(defect,rawNotes,button){
+      const notes=rawNotes.trim();if(!notes){window.alert('Enter the resolution notes before closing the defect.');return;}
+      if(!window.confirm('Close '+defect.defect_number+'? This will mark the reported defect resolved; check the linked repair evidence first.'))return;
+      button.disabled=true;
+      const {error}=await client.rpc('close_sigma_defect',{p_defect_id:defect.id,p_resolution_notes:notes});
+      if(error){window.alert('Defect closure failed: '+error.message);button.disabled=false;return;}
+      await Promise.all([loadEquipment(),loadAvailableDefects()]);await loadDefects();
     }
     function updateMaintenanceDefectOptions(){
       const field=$('maintenanceDefect'),previous=field.value,signalId=$('maintenanceSignal').value;
