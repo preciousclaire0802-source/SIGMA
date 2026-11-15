@@ -255,7 +255,7 @@
     });
     async function loadMaintenance(){
       const list=$('maintenanceList');list.textContent='Loading maintenance tasks…';
-      const {data,error}=await client.from('maintenance_records').select('maintenance_number,traffic_signal_id,maintenance_type,maintenance_title,maintenance_description,priority,scheduled_date,maintenance_status,verification_status').order('created_at',{ascending:false}).limit(60);
+      const {data,error}=await client.from('maintenance_records').select('id,maintenance_number,traffic_signal_id,maintenance_type,maintenance_title,maintenance_description,priority,scheduled_date,maintenance_status,verification_status,actions_taken,verification_notes,assigned_personnel').order('created_at',{ascending:false}).limit(60);
       if(error){list.textContent='Could not retrieve tasks: '+error.message;return;}
       list.replaceChildren();if(!data?.length){list.textContent='No maintenance tasks recorded yet.';return;}
       for(const item of data){
@@ -264,8 +264,48 @@
         const meta=document.createElement('div');meta.className='defect-meta';
         for(const value of [item.maintenance_number,item.maintenance_type,item.priority+' task priority',item.maintenance_status,item.scheduled_date||'Unscheduled',item.verification_status]){const span=document.createElement('span');span.textContent=value;meta.append(span);}
         const description=document.createElement('p');description.textContent=item.maintenance_description||'No task description provided.';
-        box.append(title,meta,description);list.append(box);
+        box.append(title,meta,description);
+        if(item.actions_taken){const actions=document.createElement('p');actions.textContent='Repair actions: '+item.actions_taken;box.append(actions);}
+        if(item.verification_notes){const notes=document.createElement('p');notes.textContent='Verification notes: '+item.verification_notes;box.append(notes);}
+        const canProgress=['admin','engineer'].includes(currentRole);
+        const canVerify=canProgress;
+        if((item.maintenance_status==='Pending'||item.maintenance_status==='In Progress')&&canProgress){
+          const actions=document.createElement('div');actions.className='actions';
+          if(item.maintenance_status==='In Progress'){
+            const textarea=document.createElement('textarea');textarea.placeholder='Record repair actions performed (required)';textarea.maxLength=3000;textarea.style.cssText='width:100%;min-height:76px;margin-top:12px;padding:12px;background:#061c27;color:#fff;border:1px solid #35515d;border-radius:10px';box.append(textarea);
+            const button=document.createElement('button');button.type='button';button.className='outline';button.textContent='Complete maintenance';button.addEventListener('click',()=>maintenanceAction(item,'complete',textarea.value,button,box));actions.append(button);
+          }else{
+            const button=document.createElement('button');button.type='button';button.className='outline';button.textContent='Start maintenance';button.addEventListener('click',()=>maintenanceAction(item,'start','',button,box));actions.append(button);
+          }
+          box.append(actions);
+        }
+        if(item.maintenance_status==='Completed'&&item.verification_status==='Not Verified'&&canVerify){
+          const textarea=document.createElement('textarea');textarea.placeholder='Verification findings (required for either result)';textarea.maxLength=3000;textarea.style.cssText='width:100%;min-height:76px;margin-top:12px;padding:12px;background:#061c27;color:#fff;border:1px solid #35515d;border-radius:10px';box.append(textarea);
+          const actions=document.createElement('div');actions.className='actions';
+          for(const [label,passed] of [['Verify repair',true],['Return for rework',false]]){
+            const button=document.createElement('button');button.type='button';button.className='outline';button.textContent=label;button.addEventListener('click',()=>verifyMaintenance(item,passed,textarea.value,button,box));actions.append(button);
+          }
+          box.append(actions);
+        }
+        list.append(box);
       }
+    }
+    async function maintenanceAction(item,action,rawNotes,button,box){
+      const notes=rawNotes.trim();
+      if(action==='complete'&&!notes){window.alert('Record the repair actions before completing this task.');return;}
+      if(!window.confirm(action==='start'?'Start this maintenance task?':'Confirm that the recorded maintenance work has been completed?'))return;
+      button.disabled=true;
+      const {error}=await client.rpc('update_sigma_maintenance',{p_maintenance_id:item.id,p_action:action,p_actions_taken:notes||null});
+      if(error){window.alert('Maintenance update failed: '+error.message);button.disabled=false;return;}
+      await loadMaintenance();
+    }
+    async function verifyMaintenance(item,passed,rawNotes,button,box){
+      const notes=rawNotes.trim();if(!notes){window.alert('Enter verification notes first.');return;}
+      if(!window.confirm(passed?'Confirm this repair has been verified?':'Return this task to In Progress for additional work?'))return;
+      button.disabled=true;
+      const {error}=await client.rpc('verify_sigma_maintenance',{p_maintenance_id:item.id,p_verified:passed,p_notes:notes});
+      if(error){window.alert('Verification update failed: '+error.message);button.disabled=false;return;}
+      await loadMaintenance();
     }
     $('maintenanceForm').addEventListener('submit',async event=>{
       event.preventDefault();const message=$('maintenanceMessage'),button=$('createMaintenance');
