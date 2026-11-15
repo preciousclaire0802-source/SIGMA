@@ -122,6 +122,28 @@
     .modal-body .form-grid textarea{min-height:62px}.modal-head{padding:10px 19px}.modal-body .actions{margin-top:9px}
     @media(max-height:700px){#appScreen main>.alert{font-size:11px}#appScreen .panel>.section-head{margin-bottom:6px}#appScreen .panel>.muted{display:none}#appScreen .workspace-view{padding:13px 16px}#appScreen .workspace-box{padding:12px}#appScreen .top h1{font-size:26px}}
   </style>
+  <style>
+    /* Liquid-glass finish, using SIGMA's deep five-color palette. */
+    body{background:radial-gradient(ellipse at 74% -18%,#8e253c48 0,transparent 48%),radial-gradient(ellipse at 5% 95%,#527a5840 0,transparent 42%),linear-gradient(125deg,#070d1b,#101624 58%,#12121d)}
+    .app{position:relative;isolation:isolate}
+    .app::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;background:radial-gradient(circle at 87% 25%,#c29d5330,transparent 27%),radial-gradient(circle at 25% 95%,#71304333,transparent 32%)}
+    aside{background:linear-gradient(145deg,#0c1323d9,#151722d1 80%);backdrop-filter:blur(22px) saturate(130%);-webkit-backdrop-filter:blur(22px) saturate(130%);border-right:1px solid #e6c8812c;box-shadow:8px 0 30px #0003}
+    .panel,.card,.report-block,.overview-summary{background:linear-gradient(135deg,#ffffff0e,#ffffff04 57%,#7f253115);border:1px solid #f3e2bf2d;box-shadow:inset 0 1px 0 #ffffff16,0 18px 44px #0004;backdrop-filter:blur(20px) saturate(118%);-webkit-backdrop-filter:blur(20px) saturate(118%)}
+    #appScreen .workspace-box,.defect-item{background:linear-gradient(155deg,#1b2535a8,#141a28b8);border:1px solid #c2b7a72c;box-shadow:inset 0 1px 0 #ffffff10,0 9px 24px #0002;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+    #appScreen .panel>.section-head{padding-bottom:12px;border-bottom:1px solid #ffffff21}
+    #appScreen .workspace-view .section-head h2{font-weight:700;letter-spacing:-.01em}
+    .nav button.active{background:linear-gradient(90deg,#9b3450bb,#75374d66);box-shadow:inset 3px 0 0 #e4c172,inset 0 1px 0 #ffffff20,0 7px 20px #0003;border:1px solid #eac58735}
+    .primary{background:linear-gradient(125deg,#f1d88f,#ccaa60);box-shadow:inset 0 1px 0 #fff7d0a6,0 10px 25px #a17a2b2b}
+    .outline{background:linear-gradient(135deg,#ffffff0b,#ffffff04);border:1px solid #b9aa8e50;box-shadow:inset 0 1px 0 #ffffff10}
+    .outline:hover{background:#cfb7791d;border-color:#e8c783}
+    .badge.Low{background:#527a5850;border:1px solid #8ac08d5c}.badge.Moderate{background:#b58e4140;border:1px solid #dcbb7259}.badge.High{background:#8e253c73;border:1px solid #e17b9161}
+    .sigma-modal{background:linear-gradient(140deg,#222d3bea,#131926f6);border:1px solid #f0d8a95a;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);box-shadow:inset 0 1px 0 #ffffff25,0 35px 95px #000b}
+    .sigma-modal::backdrop{background:#060918bd;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+    .login-card{background:linear-gradient(145deg,#253044d9,#131724e8);backdrop-filter:blur(25px);-webkit-backdrop-filter:blur(25px);border:1px solid #e6cd9b60;box-shadow:inset 0 1px 0 #ffffff23,0 35px 90px #000a}
+    .action-hint{background:#ffffff0c;border:1px solid #dfc17b35;color:#e0ceaa}
+    @media(max-height:750px){#appScreen .action-hint{display:none}#appScreen .workspace-box.action-launcher{justify-content:center}#appScreen .panel>.section-head{padding-bottom:7px}#appScreen .workspace-view .section-head h2{font-size:18px}}
+    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+  </style>
 </head>
 <body>
   <section id="loginScreen" class="login-wrap">
@@ -285,6 +307,8 @@
       const inspectionArea=document.createElement('div');inspectionArea.className='workspace-columns';
       inspectionArea.append(workspaceBox([$('inspectionForm'),$('completionForm').previousElementSibling.previousElementSibling,$('completionForm').previousElementSibling,$('completionForm')]),workspaceBox([inspectionHistory,$('inspectionList')],'list-scroll'));
       inspections.append(inspectionArea);
+      // Remove the old divider; it otherwise consumes vital vertical space.
+      inspections.querySelector('div[style*="border-top"]')?.remove();
       const maintenance=$('maintenancePanel');
       const maintenanceArea=document.createElement('div');maintenanceArea.className='workspace-columns';
       maintenanceArea.append(workspaceBox([$('maintenanceForm')]),workspaceBox([$('maintenanceList').previousElementSibling,$('maintenanceList')],'list-scroll'));
