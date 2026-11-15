@@ -15,6 +15,20 @@
     @media(max-width:1050px){.cards{grid-template-columns:repeat(2,1fr)}.app{grid-template-columns:190px minmax(0,1fr)}main{padding:25px}}@media(max-width:700px){.app{display:block}aside{padding:16px;gap:13px}.nav{display:flex;overflow:auto}.nav button{white-space:nowrap}.side-note{display:none}main{padding:20px}.top{align-items:flex-start}.cards{grid-template-columns:repeat(2,1fr)}.card{padding:16px}.card strong{font-size:27px}.details{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}}
   </style>
   <style>
+    /* Action workspaces keep tall forms out of the fixed-height dashboard. */
+    .action-launcher{display:grid;gap:12px;align-content:start}.action-launcher p{font-size:14px;line-height:1.6;margin:0 0 8px;color:#c3bdb5}
+    .action-launcher .primary{width:100%;margin:0;text-align:left}
+    .action-launcher .outline{text-align:left;padding:13px}
+    .action-hint{border:1px solid #8a754441;border-radius:12px;background:#d8b76a0d;padding:13px;color:#d9c99f;font-size:12px;line-height:1.6}
+    .sigma-modal{border:1px solid #b69a654e;border-radius:20px;background:linear-gradient(145deg,#1d2230,#111827);color:#f4f0e7;box-shadow:0 35px 100px #000b;width:min(790px,calc(100vw - 30px));max-height:min(86dvh,850px);padding:0;overflow:hidden}
+    .sigma-modal::backdrop{background:#050912ca;backdrop-filter:blur(6px)}
+    .modal-head{padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid #ffffff22}
+    .modal-head h2{font-size:21px;margin:0;color:#f6e3b9}.modal-body{padding:22px 24px 26px;overflow-y:auto;max-height:calc(min(86dvh,850px) - 72px);scrollbar-color:#99774d #131823}
+    .modal-body .form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.modal-body .actions{flex-wrap:wrap}
+    @media(max-width:700px){.modal-body{padding:15px}.modal-head{padding:15px}.modal-body .form-grid{grid-template-columns:1fr}}
+    @media(max-height:700px){#appScreen main{padding-top:17px;padding-bottom:13px}#appScreen main>.top{margin-bottom:9px;padding-bottom:8px}.top h1{font-size:29px;margin:3px 0}.top .subtitle{font-size:13px}#appScreen main>.alert{margin-bottom:9px;padding:7px 12px}.panel{padding:16px 20px}.panel>.section-head{margin-bottom:10px}.panel>.muted{font-size:13px;margin:8px 0 12px}}
+  </style>
+  <style>
     /* Fixed-screen workspaces: history scrolls inside its panel, not the page. */
     html,body{height:100%;overflow:hidden}
     #appScreen.app{height:100dvh;min-height:0;overflow:hidden}
@@ -247,8 +261,35 @@
       const maintenanceArea=document.createElement('div');maintenanceArea.className='workspace-columns';
       maintenanceArea.append(workspaceBox([$('maintenanceForm')]),workspaceBox([$('maintenanceList').previousElementSibling,$('maintenanceList')],'list-scroll'));
       maintenance.append(maintenanceArea);
+      setupActionModals();
       for(const id of Object.keys(viewTitles))$(id).classList.add('workspace-view');
       switchView('overviewPanel');
+    }
+    function setupActionModals(){
+      const storage=document.createElement('div');storage.className='hidden';storage.id='formStorage';document.body.append(storage);
+      const dialog=document.createElement('dialog');dialog.className='sigma-modal';dialog.id='actionDialog';
+      const head=document.createElement('div');head.className='modal-head';
+      const title=document.createElement('h2');title.id='actionDialogTitle';
+      const close=document.createElement('button');close.className='outline';close.type='button';close.textContent='✕ Close';close.addEventListener('click',()=>dialog.close());
+      head.append(title,close);
+      const body=document.createElement('div');body.className='modal-body';body.id='actionDialogBody';dialog.append(head,body);document.body.append(dialog);
+      dialog.addEventListener('close',()=>{for(const form of [...body.querySelectorAll('form')])storage.append(form);});
+      const configure=(section,forms,description)=>{
+        const left=$(section).querySelector('.workspace-columns .workspace-box');
+        left.replaceChildren();left.classList.add('action-launcher');
+        const heading=document.createElement('h3');heading.textContent='Workspace actions';left.append(heading);
+        const text=document.createElement('p');text.textContent=description;left.append(text);
+        for(const [formId,label] of forms){
+          const form=$(formId);storage.append(form);
+          const button=document.createElement('button');button.type='button';button.className='primary';button.textContent='＋ '+label;
+          button.addEventListener('click',()=>{title.textContent=label;body.replaceChildren(form);dialog.showModal();});
+          left.append(button);
+        }
+        const hint=document.createElement('div');hint.className='action-hint';hint.textContent='Forms open in a focused window. Your records stay visible in the adjacent panel.';left.append(hint);
+      };
+      configure('defectsPanel',[['defectForm','Report new defect']],'Record observed defects and review the history alongside. Verified repairs can be closed from the record list.');
+      configure('inspectionsPanel',[['inspectionForm','Schedule inspection'],['completionForm','Complete inspection']],'Schedule upcoming assessments or document a completed site inspection.');
+      configure('maintenancePanel',[['maintenanceForm','Create maintenance task']],'Register new maintenance work. Start, complete, and verify existing tasks in the register.');
     }
     function switchView(id){
       for(const view of Object.keys(viewTitles))$(view).classList.toggle('hidden',view!==id);
