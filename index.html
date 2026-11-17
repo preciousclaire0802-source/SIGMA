@@ -371,6 +371,76 @@
     @media(max-height:730px){#appScreen aside{padding:17px 12px;gap:18px}#appScreen .nav{gap:4px}#appScreen .nav button{padding:10px 12px;font-size:13px}#appScreen .side-note{padding:10px}}
     @media(max-height:670px){.ai-context,.ai-chat{padding:10px;gap:6px}.ai-context p{display:none}.ai-examples button{padding:6px 9px}.ai-composer textarea{height:43px;min-height:43px}.ai-disclaimer{font-size:10px}}
   </style>
+  <style>
+    /* Brighter, high-contrast overview. Other operational workspaces remain dark. */
+    #appScreen.overview-light main{
+      color:#1a2b42;
+      background:
+        radial-gradient(ellipse at 88% 7%,#eaccc9aa 0%,transparent 43%),
+        radial-gradient(ellipse at 7% 96%,#c8dfd3ac 0%,transparent 40%),
+        linear-gradient(125deg,#f5f7f8 0%,#e7eef6 52%,#e3e6ee 100%);
+    }
+    #appScreen.overview-light .top{border-bottom-color:#7e90a52e}
+    #appScreen.overview-light .top h1{
+      color:#15263c;text-shadow:none;font-weight:800;
+    }
+    #appScreen.overview-light .top .eyebrow{color:#973951}
+    #appScreen.overview-light .top .subtitle{color:#4a6076}
+    #appScreen.overview-light main>.alert{
+      color:#63471b;
+      background:linear-gradient(110deg,#fff9eaf0,#f5ebd8d9);
+      border:1px solid #b88a3d6b;border-left:3px solid #ad8135;
+      box-shadow:inset 0 1px 0 #fff,0 5px 17px #4d536414;
+    }
+    #appScreen.overview-light #overviewPanel .card,
+    #appScreen.overview-light #overviewPanel .overview-summary{
+      color:#15263c;
+      border:1px solid transparent;
+      background:
+        linear-gradient(146deg,#fffffff7 0%,#f9fbffeb 36%,#edf3fae8 100%) padding-box,
+        linear-gradient(135deg,#fff 0%,#a9bed3bd 47%,#d2b77c9e 100%) border-box;
+      box-shadow:inset 0 2px 0 #fff,inset 0 -1px 0 #9caecb4d,0 15px 34px #42597625;
+      -webkit-backdrop-filter:blur(28px) saturate(145%);
+      backdrop-filter:blur(28px) saturate(145%);
+    }
+    #appScreen.overview-light #overviewPanel .card::before,
+    #appScreen.overview-light #overviewPanel .overview-summary::before{opacity:.14}
+    #appScreen.overview-light #overviewPanel .card:hover{
+      box-shadow:inset 0 2px 0 #fff,0 18px 37px #42597635,0 0 0 1px #c7a55e6b;
+    }
+    #appScreen.overview-light #overviewPanel .card span{
+      color:#516780;font-weight:750;font-size:13px;
+    }
+    #appScreen.overview-light #overviewPanel .card strong{
+      color:#172d49;text-shadow:none;font-weight:850;
+    }
+    #appScreen.overview-light #overviewPanel .card .red{color:#ae3654}
+    #appScreen.overview-light #overviewPanel .card .yellow{color:#95641e}
+    #appScreen.overview-light #overviewPanel .card .green{color:#2e7654}
+    #appScreen.overview-light #overviewPanel .overview-summary h2{
+      color:#1d344f;text-shadow:none;
+    }
+    #appScreen.overview-light #overviewPanel .summary-row{
+      color:#3c536e;border-bottom-color:#bac8d770;font-weight:600;
+    }
+    #appScreen.overview-light #overviewPanel .summary-row strong{
+      color:#82452f;text-shadow:none;font-weight:850;
+    }
+    #appScreen.overview-light main .outline{
+      color:#1c3049!important;text-shadow:none;
+      background:linear-gradient(160deg,#fffffff0,#e1eaf3ed);
+      border-color:#9cafc4;
+      box-shadow:inset 0 2px 0 #fff,inset 0 -2px 0 #a1afc344,0 5px 14px #54657f32;
+    }
+    #appScreen.overview-light main .outline:hover{
+      color:#11273d!important;background:linear-gradient(160deg,#fff,#d2e0ed);
+    }
+    #appScreen.overview-light #appMessage{color:#465d73}
+    @media(prefers-contrast:more){
+      #appScreen.overview-light #overviewPanel .card,
+      #appScreen.overview-light #overviewPanel .overview-summary{background:#fff;border-color:#587089}
+    }
+  </style>
 </head>
 <body>
   <section id="loginScreen" class="login-wrap">
@@ -650,6 +720,7 @@
       node.addEventListener('keydown',event=>{if(event.key==='Enter')openRecordDetails(label,details);});
     }
     function switchView(id){
+      $('appScreen').classList.toggle('overview-light',id==='overviewPanel');
       for(const view of Object.keys(viewTitles))$(view).classList.toggle('hidden',view!==id);
       const navMap={overviewPanel:'overviewNav',equipmentPanel:'equipmentNav',defectsPanel:'defectsNav',inspectionsPanel:'inspectionsNav',maintenancePanel:'maintenanceNav',reportsPanel:'reportsNav',aiPanel:'aiNav'};
       for(const button of document.querySelectorAll('.nav button'))button.classList.toggle('active',button.id===navMap[id]);
