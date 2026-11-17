@@ -336,6 +336,41 @@
 
     @media (prefers-contrast:more){.panel,.card,.overview-summary,.report-block,#appScreen .workspace-box,.defect-item{background:#132236;border-color:#f4dca4}.muted,.subtitle,.foot,.side-note{color:#f0f4f9}}
   </style>
+  <style>
+    /* AI assistant: dedicated fixed-height workspace with an internal chat scroll. */
+    #aiPanel{display:flex;flex-direction:column;min-height:0;overflow:hidden;gap:10px}
+    #aiPanel>.section-head{flex:0 0 auto;margin-bottom:0}
+    .ai-layout{display:grid;grid-template-columns:minmax(240px,.72fr) minmax(0,1.28fr);gap:15px;min-height:0;flex:1 1 auto}
+    .ai-context,.ai-chat{min-width:0;min-height:0;display:flex;flex-direction:column;border-radius:20px;border:1px solid #c6d7ea65;background:linear-gradient(152deg,#2d415ad9,#12243aef);box-shadow:inset 0 1px 1px #ffffff40,0 12px 27px #0005;padding:15px}
+    .ai-context{gap:10px;overflow-y:auto;scrollbar-color:#8799aa #142538}
+    .ai-context h3{font-size:15px;color:#ffe0a5;margin:0}
+    .ai-context p,.ai-small{color:#dce7f4;font-size:12px;line-height:1.55;margin:0}
+    .ai-context select{width:100%;max-width:100%;color:#ffffff;background:#182a40;border:1px solid #c9d9ec8c;border-radius:13px;padding:10px;font:inherit;font-size:13px}
+    .ai-context label{font-size:12px;font-weight:750;color:#ffe3ad}
+    .ai-signal-info{display:grid;gap:7px;color:#e4edf6;font-size:12px}
+    .ai-signal-info div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #ffffff21;padding:4px 0}
+    .ai-signal-info strong{text-align:right;color:#ffffff}
+    .ai-examples{display:grid;gap:7px}
+    .ai-examples button{text-align:left;font-size:12px;padding:8px 11px;line-height:1.3;border-radius:12px;white-space:normal}
+    .ai-chat{gap:9px;overflow:hidden}
+    .ai-chat-title{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;color:#ffe0a5;font-weight:750}
+    .ai-messages{flex:1 1 auto;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px 3px 10px;scrollbar-color:#8799aa #142538}
+    .ai-message{max-width:94%;padding:11px 13px;border-radius:17px;background:#23354b;border:1px solid #c4d8f15c;box-shadow:inset 0 1px #ffffff22;color:#f5f8fc;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5;font-size:13px}
+    .ai-message small{display:block;color:#ffe0a5;font-weight:800;margin-bottom:5px;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+    .ai-message.user{margin-left:auto;background:#713149d6;border-color:#eab7c68c}
+    .ai-message.user small{color:#ffdae3}
+    .ai-message.status{border-style:dashed;color:#ffe4b4}
+    .ai-composer{flex:0 0 auto;display:flex;gap:8px;align-items:end}
+    .ai-composer label{flex:1 1 auto;min-width:0;color:#e0e9f4;font-size:11px}
+    .ai-composer textarea{width:100%;resize:none;height:55px;min-height:55px;margin-top:5px;padding:10px 12px;line-height:1.4;font:inherit;font-size:13px;color:#fff;background:#15253bec;border:1px solid #becde58a;border-radius:13px}
+    .ai-composer button{width:auto;flex:0 0 auto;margin:0;padding:13px 17px;white-space:nowrap}
+    .ai-disclaimer{font-size:11px;line-height:1.4;color:#dce4ee;margin:0}
+    #aiMessageState{font-size:11px;color:#ffe4ab;min-height:14px}
+    @media(max-width:1050px){.ai-layout{grid-template-columns:minmax(190px,.65fr) minmax(0,1.35fr)}}
+    @media(max-width:700px){.ai-layout{grid-template-columns:1fr;grid-template-rows:minmax(120px,.68fr) minmax(240px,1.32fr);gap:8px}.ai-context,.ai-chat{padding:10px}.ai-context{gap:5px}.ai-examples{display:none}}
+    @media(max-height:730px){#appScreen aside{padding:17px 12px;gap:18px}#appScreen .nav{gap:4px}#appScreen .nav button{padding:10px 12px;font-size:13px}#appScreen .side-note{padding:10px}}
+    @media(max-height:670px){.ai-context,.ai-chat{padding:10px;gap:6px}.ai-context p{display:none}.ai-examples button{padding:6px 9px}.ai-composer textarea{height:43px;min-height:43px}.ai-disclaimer{font-size:10px}}
+  </style>
 </head>
 <body>
   <section id="loginScreen" class="login-wrap">
@@ -361,6 +396,7 @@
         <button id="inspectionsNav" type="button">▤ &nbsp; Inspections</button>
         <button id="maintenanceNav" type="button">⚒ &nbsp; Maintenance</button>
         <button id="reportsNav" type="button">▥ &nbsp; Reports</button>
+        <button id="aiNav" type="button">✦ &nbsp; AI Assistant</button>
       </nav>
       <div class="side-note">Maintenance intelligence<br />Simulated records · No live telemetry</div>
     </aside>
@@ -455,6 +491,35 @@
         </div>
         <p class="foot" id="reportMessage" role="status"></p>
       </section>
+      <section class="panel hidden" id="aiPanel" aria-label="AI maintenance assistant">
+        <div class="section-head"><h2>AI Maintenance Assistant</h2><span class="badge Moderate">Read-only recommendations</span></div>
+        <div class="ai-layout">
+          <div class="ai-context">
+            <h3>Equipment context</h3>
+            <p>Choose a traffic signal so AI can consider its recorded condition, defects, inspections, and maintenance history.</p>
+            <label for="aiSignal">Traffic signal</label>
+            <select id="aiSignal"><option value="">General questions (no equipment)</option></select>
+            <div id="aiSignalInfo" class="ai-signal-info" aria-live="polite">Choose equipment to review its recorded details.</div>
+            <h3>Try asking</h3>
+            <div class="ai-examples">
+              <button type="button" class="outline" data-ai-prompt="Based on the recorded defects and inspections, what should our team check first?">What should we inspect first?</button>
+              <button type="button" class="outline" data-ai-prompt="Summarize the likely maintenance concerns and explain what is still unverified.">Summarize maintenance concerns</button>
+              <button type="button" class="outline" data-ai-prompt="Suggest a safe, practical inspection checklist for a qualified traffic-signal technician.">Create an inspection checklist</button>
+            </div>
+            <p class="ai-small">The existing Low / Moderate / High priority is rule-based; AI suggestions do not change it.</p>
+          </div>
+          <div class="ai-chat">
+            <div class="ai-chat-title"><span>✦ Ask SIGMA AI</span><button id="clearAiChat" class="outline" type="button">Clear chat</button></div>
+            <div id="aiMessages" class="ai-messages" role="log" aria-live="polite" aria-relevant="additions text"></div>
+            <form id="aiForm" class="ai-composer">
+              <label for="aiQuestion">Your question<textarea id="aiQuestion" maxlength="900" required placeholder="Ask about defects, priorities, or inspections…"></textarea></label>
+              <button type="submit" id="aiSend" class="primary">Ask AI ↗</button>
+            </form>
+            <div id="aiMessageState" role="status"></div>
+            <p class="ai-disclaimer">Advisory only · Gemini processes selected demo records · An engineer must verify recommendations. Do not enter sensitive data.</p>
+          </div>
+        </div>
+      </section>
       <p id="appMessage" class="foot" role="status"></p>
     </main>
   </div>
@@ -474,7 +539,9 @@
     let unresolvedDefects = [];
     let reportData={};
     let currentRole = null;
-    const viewTitles={overviewPanel:['Operations Overview','A clear picture of traffic signal maintenance priorities.'],equipmentPanel:['Equipment Registry','Monitor recorded conditions and investigate equipment concerns.'],defectsPanel:['Defect Management','Report observations and manage verified defect closure.'],inspectionsPanel:['Inspection Workspace','Schedule inspections and document completed assessments.'],maintenancePanel:['Maintenance Workspace','Plan, execute, and verify maintenance activities.'],reportsPanel:['Reports & Analytics','Explore equipment trends and export maintenance records.']};
+    let aiConversation=[];
+    let aiBusy=false;
+    const viewTitles={overviewPanel:['Operations Overview','A clear picture of traffic signal maintenance priorities.'],equipmentPanel:['Equipment Registry','Monitor recorded conditions and investigate equipment concerns.'],defectsPanel:['Defect Management','Report observations and manage verified defect closure.'],inspectionsPanel:['Inspection Workspace','Schedule inspections and document completed assessments.'],maintenancePanel:['Maintenance Workspace','Plan, execute, and verify maintenance activities.'],reportsPanel:['Reports & Analytics','Explore equipment trends and export maintenance records.'],aiPanel:['AI Maintenance Assistant','Ask questions about recorded equipment concerns and suggested inspections.']};
     function workspaceBox(children,extra=''){
       const box=document.createElement('div');box.className='workspace-box '+extra;
       for(const child of children)if(child)box.append(child);
@@ -584,7 +651,7 @@
     }
     function switchView(id){
       for(const view of Object.keys(viewTitles))$(view).classList.toggle('hidden',view!==id);
-      const navMap={overviewPanel:'overviewNav',equipmentPanel:'equipmentNav',defectsPanel:'defectsNav',inspectionsPanel:'inspectionsNav',maintenancePanel:'maintenanceNav',reportsPanel:'reportsNav'};
+      const navMap={overviewPanel:'overviewNav',equipmentPanel:'equipmentNav',defectsPanel:'defectsNav',inspectionsPanel:'inspectionsNav',maintenancePanel:'maintenanceNav',reportsPanel:'reportsNav',aiPanel:'aiNav'};
       for(const button of document.querySelectorAll('.nav button'))button.classList.toggle('active',button.id===navMap[id]);
       document.querySelector('.top h1').textContent=viewTitles[id][0];
       document.querySelector('.top .subtitle').textContent=viewTitles[id][1];
@@ -657,6 +724,7 @@
       $('inspectionSignal').value=inspectionSelected;
       $('maintenanceSignal').value=maintenanceSelected;
       updateMaintenanceDefectOptions();
+      refreshAiEquipmentOptions();
       $('totalCount').textContent=equipment.length;
       for(const level of ['High','Moderate','Low']) $(''+level.toLowerCase()+'Count').textContent=equipment.filter(e=>e.maintenance_priority===level).length;
       const tbody=$('equipmentRows');tbody.replaceChildren();
@@ -908,11 +976,79 @@
       message.textContent='Defect saved successfully.';$('defectForm').reset();
       $('detailsPanel').classList.add('hidden');await Promise.all([loadEquipment(),loadDefects(),loadAvailableDefects()]);
     });
+    function refreshAiEquipmentOptions(){
+      const select=$('aiSignal');const previous=select.value;
+      select.replaceChildren(new Option('General questions (no equipment)',''));
+      for(const item of equipment)select.add(new Option(item.equipment_id+' — '+(item.intersection_name||item.location_name||'Unknown location'),item.id));
+      select.value=equipment.some(item=>item.id===previous)?previous:'';
+      updateAiSignalInfo();
+    }
+    function updateAiSignalInfo(){
+      const root=$('aiSignalInfo');root.replaceChildren();
+      const item=equipment.find(record=>record.id===$('aiSignal').value);
+      if(!item){root.textContent='General assistant mode. Select equipment to include its actual recorded history.';return;}
+      for(const [name,value] of [
+        ['Equipment',item.equipment_id],['Operating status',item.operating_status],
+        ['Recorded condition',item.equipment_condition],['Rule-based priority',item.maintenance_priority],
+        ['Open defects',item.unresolved_defects],['Overdue inspections',item.overdue_inspections]
+      ]){
+        const row=document.createElement('div');const label=document.createElement('span');const detail=document.createElement('strong');
+        label.textContent=name;detail.textContent=String(value??'Unknown');row.append(label,detail);root.append(row);
+      }
+    }
+    function appendAiMessage(type,text){
+      const bubble=document.createElement('div');bubble.className='ai-message '+type;
+      const label=document.createElement('small');label.textContent=type==='user'?'You':type==='status'?'SIGMA AI · Working':'SIGMA AI';
+      const content=document.createElement('div');content.textContent=text;
+      bubble.append(label,content);$('aiMessages').append(bubble);$('aiMessages').scrollTop=$('aiMessages').scrollHeight;
+      return bubble;
+    }
+    function resetAiChat(){
+      aiConversation=[];$('aiMessages').replaceChildren();
+      appendAiMessage('assistant','Hello! I can explain maintenance concerns, summarize recorded issues, and suggest inspection checklists. Choose equipment on the left for record-specific guidance. I cannot inspect or control a real traffic signal.');
+      $('aiMessageState').textContent='';$('aiQuestion').value='';
+    }
+    async function askAi(e){
+      e.preventDefault();
+      if(aiBusy)return;
+      const question=$('aiQuestion').value.trim();
+      if(!question){$('aiMessageState').textContent='Enter a question first.';return;}
+      if(question.length>900){$('aiMessageState').textContent='Please shorten your question.';return;}
+      if(!client){$('aiMessageState').textContent='The database connection is not configured.';return;}
+      const signalId=$('aiSignal').value||null;
+      aiBusy=true;$('aiSend').disabled=true;$('aiSignal').disabled=true;
+      $('aiMessageState').textContent='Reviewing recorded data and generating guidance…';
+      appendAiMessage('user',question);$('aiQuestion').value='';
+      const pending=appendAiMessage('status','Reviewing the selected equipment records…');
+      try{
+        const {data:{session}}=await client.auth.getSession();
+        if(!session?.access_token)throw new Error('Your session expired. Sign in again.');
+        const {data,error}=await client.functions.invoke('sigma-ai-advisor',{
+          body:{message:question,signal_id:signalId,history:aiConversation.slice(-6)}
+        });
+        if(error){
+          let details=error.message||'The AI service is unavailable.';
+          if(error.context?.json){const payload=await error.context.json().catch(()=>null);details=payload?.error||details;}
+          throw new Error(details);
+        }
+        if(typeof data?.answer!=='string'||!data.answer.trim())throw new Error('The AI returned no answer. Please try again.');
+        pending.remove();appendAiMessage('assistant',data.answer.trim());
+        aiConversation.push({role:'user',text:question},{role:'model',text:data.answer.trim()});
+        aiConversation=aiConversation.slice(-6);
+        $('aiMessageState').textContent='AI-generated suggestion · Not a verified diagnosis.';
+      }catch(error){
+        pending.remove();appendAiMessage('status','Could not generate an answer: '+(error?.message||'Unknown error'));
+        $('aiQuestion').value=question;
+        $('aiMessageState').textContent='Please check the function setup and try again.';
+      }finally{
+        aiBusy=false;$('aiSend').disabled=false;$('aiSignal').disabled=false;
+      }
+    }
     async function enterApp(){
       const {data:{user},error}=await client.auth.getUser();if(error||!user){showLogin();return;}
       const {data:profile,error:profileError}=await client.from('profiles').select('role').eq('id',user.id).single();
       if(profileError||!['admin','engineer','maintenance'].includes(profile?.role)){await client.auth.signOut();showLogin('Your account is pending approval or lacks a valid profile.');return;}
-      currentRole=profile.role;showApp();$('scheduleInspection').disabled=currentRole==='maintenance';$('completeInspection').disabled=currentRole==='maintenance';$('createMaintenance').disabled=currentRole==='maintenance';$('inspectionDate').min=manilaToday();$('maintenanceDate').min=manilaToday();await loadEquipment();await Promise.all([loadDefects(),loadAvailableDefects(),loadInspections(),loadMaintenance(),loadReports()]);
+      currentRole=profile.role;showApp();resetAiChat();$('scheduleInspection').disabled=currentRole==='maintenance';$('completeInspection').disabled=currentRole==='maintenance';$('createMaintenance').disabled=currentRole==='maintenance';$('inspectionDate').min=manilaToday();$('maintenanceDate').min=manilaToday();await loadEquipment();await Promise.all([loadDefects(),loadAvailableDefects(),loadInspections(),loadMaintenance(),loadReports()]);
     }
     $('loginForm').addEventListener('submit',async e=>{
       e.preventDefault();if(!client){$('loginMessage').textContent='Set your Supabase URL and publishable key in the HTML first.';return;}
@@ -922,7 +1058,7 @@
       if(error){$('loginMessage').textContent=error.message;return;}
       $('password').value='';await enterApp();
     });
-    $('logoutButton').addEventListener('click',async()=>{await client.auth.signOut();showLogin('You have signed out.');});
+    $('logoutButton').addEventListener('click',async()=>{await client.auth.signOut();resetAiChat();showLogin('You have signed out.');});
     $('refreshButton').addEventListener('click',loadEquipment);
     $('overviewNav').addEventListener('click',()=>switchView('overviewPanel'));
     $('equipmentNav').addEventListener('click',()=>switchView('equipmentPanel'));
@@ -930,6 +1066,12 @@
     $('inspectionsNav').addEventListener('click',()=>switchView('inspectionsPanel'));
     $('maintenanceNav').addEventListener('click',()=>switchView('maintenancePanel'));
     $('reportsNav').addEventListener('click',()=>switchView('reportsPanel'));
+    $('aiNav').addEventListener('click',()=>switchView('aiPanel'));
+    $('aiSignal').addEventListener('change',()=>{updateAiSignalInfo();resetAiChat();});
+    $('clearAiChat').addEventListener('click',()=>{if(!aiBusy)resetAiChat();});
+    $('aiForm').addEventListener('submit',askAi);
+    $('aiQuestion').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('aiForm').requestSubmit();}});
+    for(const button of document.querySelectorAll('[data-ai-prompt]'))button.addEventListener('click',()=>{$('aiQuestion').value=button.dataset.aiPrompt;$('aiQuestion').focus();});
     $('refreshReports').addEventListener('click',loadReports);
     for(const button of document.querySelectorAll('[data-export]'))button.addEventListener('click',()=>downloadCsv(button.dataset.export));
     $('refreshMaintenance').addEventListener('click',loadMaintenance);
