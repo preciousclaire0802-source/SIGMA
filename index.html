@@ -372,7 +372,7 @@
     @media(max-height:670px){.ai-context,.ai-chat{padding:10px;gap:6px}.ai-context p{display:none}.ai-examples button{padding:6px 9px}.ai-composer textarea{height:43px;min-height:43px}.ai-disclaimer{font-size:10px}}
   </style>
   <style>
-    /* Brighter, high-contrast overview. Other operational workspaces remain dark. */
+    /* Brighter, high-contrast overview cards and maintenance summary. */
     #appScreen.overview-light main{
       color:#1a2b42;
       background:
@@ -439,6 +439,188 @@
     @media(prefers-contrast:more){
       #appScreen.overview-light #overviewPanel .card,
       #appScreen.overview-light #overviewPanel .overview-summary{background:#fff;border-color:#587089}
+    }
+  </style>
+  <style>
+    /* Shared pearl-glass theme for every SIGMA workspace and its dialogs. */
+    #appScreen main{
+      color:#1a2b42;
+      background:
+        radial-gradient(ellipse at 87% 6%,#eaccc9aa,transparent 43%),
+        radial-gradient(ellipse at 7% 96%,#c8dfd3ac,transparent 40%),
+        linear-gradient(125deg,#f5f7f8 0%,#e7eef6 52%,#e3e6ee 100%);
+    }
+    #appScreen main .top{border-bottom-color:#7e90a52e}
+    #appScreen main .top h1{color:#15263c;text-shadow:none;font-weight:800}
+    #appScreen main .top .eyebrow{color:#973951}
+    #appScreen main .top .subtitle{color:#4a6076}
+    #appScreen main>.alert{
+      color:#63471b;
+      background:linear-gradient(110deg,#fff9eaf0,#f5ebd8d9);
+      border:1px solid #b88a3d6b;border-left:3px solid #ad8135;
+      box-shadow:inset 0 1px 0 #fff,0 5px 17px #4d536414;
+    }
+    #appScreen main .panel,
+    #appScreen main .card,
+    #appScreen main .report-block,
+    #appScreen main .workspace-box,
+    #appScreen main .defect-item,
+    #appScreen main .ai-context,
+    #appScreen main .ai-chat,
+    #appScreen main .detail,
+    #appScreen main .table-wrap,
+    #appScreen main .action-hint{
+      color:#1c314b;
+      border:1px solid transparent;
+      background:
+        linear-gradient(146deg,#fffffff5 0%,#f8fbffec 37%,#edf3faeb 100%) padding-box,
+        linear-gradient(137deg,#fff 0%,#a9bed3bd 48%,#d2b77c9e 100%) border-box;
+      box-shadow:inset 0 2px 0 #fff,inset 0 -1px 0 #9caecb45,0 12px 29px #42597624;
+      -webkit-backdrop-filter:blur(28px) saturate(145%);
+      backdrop-filter:blur(28px) saturate(145%);
+    }
+    #appScreen main .panel::before,
+    #appScreen main .card::before,
+    #appScreen main .report-block::before,
+    #appScreen main .workspace-box::before{opacity:.14}
+    #appScreen main .panel h2,
+    #appScreen main .panel h3,
+    #appScreen main .report-block h3,
+    #appScreen main .workspace-box h3,
+    #appScreen main .section-head h2,
+    #appScreen main .detail b,
+    #appScreen main .card strong{color:#1d344f;text-shadow:none}
+    #appScreen main .muted,
+    #appScreen main .foot,
+    #appScreen main .empty,
+    #appScreen main .action-launcher p,
+    #appScreen main .defect-item p,
+    #appScreen main .form-grid label,
+    #appScreen main .form-status,
+    #appScreen main .detail small,
+    #appScreen main .defect-meta,
+    #appScreen main .bar-top,
+    #appScreen main .pager,
+    #appScreen main .action-hint{color:#465f79;text-shadow:none}
+    #appScreen main .eyebrow{color:#973951}
+    #appScreen main .card span{color:#516780;font-weight:750}
+    #appScreen main .card .red{color:#ae3654}
+    #appScreen main .card .yellow{color:#95641e}
+    #appScreen main .card .green{color:#2e7654}
+    #appScreen main .outline,
+    #appScreen main .pager button,
+    #appScreen main .downloads button,
+    .sigma-modal .outline{
+      color:#1c3049!important;text-shadow:none;
+      background:linear-gradient(160deg,#fffffff0,#e1eaf3ed);
+      border:1px solid #9cafc4;
+      box-shadow:inset 0 2px 0 #fff,inset 0 -2px 0 #a1afc344,0 5px 14px #54657f32;
+    }
+    #appScreen main .outline:hover,
+    #appScreen main .pager button:hover:not(:disabled),
+    .sigma-modal .outline:hover{
+      color:#11273d!important;background:linear-gradient(160deg,#fff,#d2e0ed)
+    }
+    #appScreen main .table-wrap{border-color:#c3d0e0}
+    #appScreen main th{background:#dfebf6;color:#2c4764;border-bottom-color:#b4c4d7}
+    #appScreen main td{color:#2a405a;border-bottom-color:#becbdc9c}
+    #appScreen main tbody tr:hover{background:#d7e7f377}
+    #appScreen main .bar-bg{background:#cbd8e7;box-shadow:inset 0 1px 4px #6d809533}
+    #appScreen main .bar-top{color:#405b74}
+    #appScreen main .defect-meta{color:#7c4b56}
+    #appScreen main .defect-item p{color:#4a5f78}
+    #appScreen main .detail small{color:#526b85}
+    #appScreen main #detailsPanel:not(.hidden){background:#f4f8fcee;border-left-color:#be9357}
+    #appScreen main #priorityReasons{color:#455b73}
+    #appScreen main #appMessage{color:#465d73}
+
+    /* Light form wells remain readable, including controls moved into dialogs. */
+    #appScreen main input,
+    #appScreen main select,
+    #appScreen main textarea,
+    .sigma-modal input,
+    .sigma-modal select,
+    .sigma-modal textarea,
+    .login-card input{
+      background:linear-gradient(155deg,#fff,#e9f0f7)!important;
+      border:1px solid #98aec3!important;
+      color:#20334c!important;
+      box-shadow:inset 0 2px 6px #8596ab27,inset 0 1px 0 #fff!important;
+      color-scheme:light;
+    }
+    #appScreen main :is(input,textarea)::placeholder,
+    .sigma-modal :is(input,textarea)::placeholder,
+    .login-card input::placeholder{color:#687a90!important;opacity:1}
+    #appScreen main select option,
+    .sigma-modal select option{background:#f5f8fc;color:#243b53}
+    #appScreen main :is(input,select,textarea):focus,
+    .sigma-modal :is(input,select,textarea):focus,
+    .login-card input:focus{outline:2px solid #ba98588c!important;outline-offset:1px}
+
+    /* AI conversation gets dark-on-light messages and retained crimson user bubbles. */
+    #appScreen main .ai-context h3,
+    #appScreen main .ai-context label,
+    #appScreen main .ai-chat-title{color:#273f5c}
+    #appScreen main .ai-context p,
+    #appScreen main .ai-small,
+    #appScreen main .ai-signal-info,
+    #appScreen main .ai-composer label,
+    #appScreen main .ai-disclaimer{color:#4a617a}
+    #appScreen main .ai-signal-info strong{color:#1d344f}
+    #appScreen main .ai-signal-info div{border-bottom-color:#bbcadb}
+    #appScreen main .ai-message{
+      color:#283d56;background:#e5eef8;border-color:#b9cbe0;
+      box-shadow:inset 0 1px 0 #fff;
+    }
+    #appScreen main .ai-message small{color:#85435b}
+    #appScreen main .ai-message.user{
+      color:#fff;background:linear-gradient(145deg,#9b3b59,#6c2d49);
+      border-color:#a8697d;
+    }
+    #appScreen main .ai-message.user small{color:#ffe0ea}
+    #appScreen main .ai-message.status{
+      color:#79531d;background:#fff5dd;border-color:#c7a46b;
+    }
+    #appScreen main #aiMessageState{color:#83435c}
+    #appScreen main :is(.ai-messages,.ai-context,#equipmentPanel>.table-wrap){scrollbar-color:#a3b5c9 #ecf2f9}
+
+    /* Matching light-glass dialogs for reporting, inspecting, and maintenance. */
+    .sigma-modal{
+      color:#20334c;
+      background:linear-gradient(142deg,#fffffffa,#f0f5fbf7 62%,#e7eaf3f7);
+      border:1px solid #b8c9d8;
+      box-shadow:inset 0 2px 0 #fff,0 28px 75px #101b315c;
+    }
+    .sigma-modal .modal-head{background:linear-gradient(160deg,#fff,#e4edf7);border-bottom-color:#bac9d9}
+    .sigma-modal .modal-head h2{color:#1d344f;text-shadow:none}
+    .sigma-modal .muted,
+    .sigma-modal .form-grid label,
+    .sigma-modal .field{color:#465f79}
+    .sigma-modal .form-status{color:#2c7356}
+    .sigma-modal .modal-body{scrollbar-color:#a4b6c8 #edf3f9}
+    .sigma-modal::backdrop{background:#101b31ab}
+
+    /* Login reflects the same palette, while navigation remains midnight navy. */
+    .login-wrap{
+      background:radial-gradient(ellipse at 80% 12%,#e8c5cb,transparent 39%),
+                 radial-gradient(ellipse at 8% 87%,#c6dfd2,transparent 37%),
+                 linear-gradient(130deg,#f7f8f9,#e5edf6);
+    }
+    .login-card{
+      color:#21364e;
+      background:linear-gradient(147deg,#fffffff7,#ecf2f9f5);
+      border:1px solid #bed0df;
+      box-shadow:inset 0 2px 0 #fff,0 24px 66px #334d6942;
+    }
+    .login-card .logo,
+    .login-card h1{color:#1d344f;text-shadow:none}
+    .login-card .muted,
+    .login-card .field,
+    .login-card .foot{color:#526881}
+    .login-card .notice{color:#8c4054}
+    @media(prefers-contrast:more){
+      #appScreen main :is(.panel,.card,.report-block,.workspace-box,.defect-item,.ai-context,.ai-chat){background:#fff;border-color:#587089}
+      .sigma-modal,.login-card{background:#fff;border-color:#587089}
     }
   </style>
 </head>
