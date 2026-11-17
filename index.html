@@ -1023,7 +1023,7 @@
       try{
         const {data:{session}}=await client.auth.getSession();
         if(!session?.access_token)throw new Error('Your session expired. Sign in again.');
-        const {data,error}=await client.functions.invoke('sigma-ai-advisor',{
+        const {data,error}=await client.functions.invoke('smart-action',{
           body:{message:question,signal_id:signalId,history:aiConversation.slice(-6)}
         });
         if(error){
